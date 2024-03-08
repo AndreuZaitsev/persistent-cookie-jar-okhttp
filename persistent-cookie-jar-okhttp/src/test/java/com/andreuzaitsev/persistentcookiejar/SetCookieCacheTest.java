@@ -26,7 +26,7 @@ public class SetCookieCacheTest {
 
         cache.clear();
 
-        assertFalse(cache.iterator().hasNext());
+        assertFalse(cache.hasNext());
     }
 
     /**
@@ -40,7 +40,7 @@ public class SetCookieCacheTest {
         Cookie newCookie = TestCookieCreator.createNonPersistentCookie("name", "last");
         cache.addAll(Collections.singleton(newCookie));
 
-        Cookie addedCookie = cache.iterator().next();
+        Cookie addedCookie = cache.next();
         assertEquals(newCookie, addedCookie);
     }
 
@@ -59,7 +59,7 @@ public class SetCookieCacheTest {
                 equalCookieThatShouldNotBeAdded,
                 equalCookieThatShouldBeAdded));
 
-        Cookie addedCookie = cache.iterator().next();
+        Cookie addedCookie = cache.next();
         assertEquals(equalCookieThatShouldBeAdded, addedCookie);
     }
 }
