@@ -20,25 +20,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import okhttp3.Cookie
 
-@SuppressLint("CommitPrefEdits", "ApplySharedPref")
+@SuppressLint("ApplySharedPref")
 class SharedPrefsCookiePersistor(
     private val sharedPreferences: SharedPreferences
 ) : CookiePersistor {
 
     constructor(context: Context) : this(context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE))
 
-    override fun loadAll(): List<Cookie> {
-        val cookies: MutableList<Cookie> = ArrayList(sharedPreferences.all.size)
-
-        for ((_, value) in sharedPreferences.all) {
-            val serializedCookie = value as String? ?: continue
-            val cookie = SerializableCookie().decode(serializedCookie)
-            if (cookie != null) {
-                cookies.add(cookie)
-            }
-        }
-        return cookies
-    }
+    override fun loadAll(): List<Cookie> = sharedPreferences.all.values
+        .filterIsInstance<String>()
+        .mapNotNull { serializedCookie -> SerializableCookie().decode(serializedCookie) }
 
     override fun saveAll(cookies: Collection<Cookie>) {
         val editor = sharedPreferences.edit()

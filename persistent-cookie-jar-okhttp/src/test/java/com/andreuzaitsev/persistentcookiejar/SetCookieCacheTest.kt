@@ -4,9 +4,6 @@ import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import org.junit.Assert
 import org.junit.Test
 
-/**
- * Created by Francisco J. Montiel on 11/02/16.
- */
 class SetCookieCacheTest {
 
     @Test
@@ -15,7 +12,7 @@ class SetCookieCacheTest {
         val cookie = TestCookieCreator.createPersistentCookie(false)
         cache.addAll(listOf(cookie))
         cache.clear()
-        Assert.assertFalse(cache.hasNext())
+        Assert.assertFalse(cache.iterator().hasNext())
     }
 
     /**
@@ -27,7 +24,7 @@ class SetCookieCacheTest {
         cache.addAll(setOf(TestCookieCreator.createNonPersistentCookie("name", "first")))
         val newCookie = TestCookieCreator.createNonPersistentCookie("name", "last")
         cache.addAll(setOf(newCookie))
-        val addedCookie = cache.next()
+        val addedCookie = cache.iterator().next()
         Assert.assertEquals(newCookie, addedCookie)
     }
 
@@ -48,7 +45,7 @@ class SetCookieCacheTest {
                 equalCookieThatShouldBeAdded
             )
         )
-        val addedCookie = cache.next()
+        val addedCookie = cache.iterator().next()
         Assert.assertEquals(equalCookieThatShouldBeAdded, addedCookie)
     }
 }

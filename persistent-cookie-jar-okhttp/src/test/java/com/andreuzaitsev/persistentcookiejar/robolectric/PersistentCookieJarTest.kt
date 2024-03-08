@@ -1,5 +1,7 @@
 package com.andreuzaitsev.persistentcookiejar.robolectric
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.andreuzaitsev.persistentcookiejar.PersistentCookieJar
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
@@ -7,10 +9,12 @@ import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersis
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.After
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -19,13 +23,18 @@ class PersistentCookieJarTest {
 
     private val persistentCookieJar: PersistentCookieJar = PersistentCookieJar(
         SetCookieCache(),
-        SharedPrefsCookiePersistor(RuntimeEnvironment.getApplication().applicationContext)
+        SharedPrefsCookiePersistor(ApplicationProvider.getApplicationContext<Context>())
     )
 
     private val url = "https://domain.com/".toHttpUrl()
 
+    @Before
+    fun setUp() {
+        persistentCookieJar.clear()
+    }
+
     @After
-    fun cleanCookieJar() {
+    fun tearDown() {
         persistentCookieJar.clear()
     }
 

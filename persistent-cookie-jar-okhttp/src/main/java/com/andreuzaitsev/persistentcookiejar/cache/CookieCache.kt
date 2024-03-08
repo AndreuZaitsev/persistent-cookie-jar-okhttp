@@ -20,7 +20,7 @@ import okhttp3.Cookie
 /**
  * A CookieCache handles the volatile cookie session storage.
  */
-interface CookieCache : MutableIterator<Cookie> {
+interface CookieCache {
 
     /**
      * Add all the new cookies to the session, existing cookies will be overwritten.
@@ -33,4 +33,6 @@ interface CookieCache : MutableIterator<Cookie> {
      * Clear all the cookies from the session.
      */
     fun clear()
+
+    fun iterator(): MutableIterator<Cookie>
 }

@@ -1,7 +1,9 @@
 package com.andreuzaitsev.persistentcookiejar.robolectric
 
+import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import androidx.test.core.app.ApplicationProvider
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -12,7 +14,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -20,7 +21,7 @@ import org.robolectric.annotation.Config
 class SharedPrefsCookiePersistorTest {
 
     private val sharedPreferences: SharedPreferences = Mockito.spy(
-        RuntimeEnvironment.getApplication().applicationContext.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+        ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
     )
     private val persistor: CookiePersistor = SharedPrefsCookiePersistor(sharedPreferences)
 

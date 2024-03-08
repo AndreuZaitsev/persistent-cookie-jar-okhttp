@@ -40,11 +40,12 @@ class PersistentCookieJar(
         val expiredCookies: MutableList<Cookie> = mutableListOf()
         val validCookies: MutableList<Cookie> = mutableListOf()
 
-        while (cookieCache.hasNext()) {
-            val currentCookie = cookieCache.next()
+        val cacheIterator = cookieCache.iterator()!!
+        while (cacheIterator.hasNext()) {
+            val currentCookie = cacheIterator.next()
             if (isCookieExpired(currentCookie)) {
                 expiredCookies += currentCookie
-                cookieCache.remove()
+                cacheIterator.remove()
             } else if (currentCookie.matches(url)) {
                 validCookies += currentCookie
             }

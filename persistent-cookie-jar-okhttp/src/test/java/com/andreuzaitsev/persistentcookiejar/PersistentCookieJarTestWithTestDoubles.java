@@ -18,9 +18,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by Francisco J. Montiel on 11/02/16.
- */
 public class PersistentCookieJarTestWithTestDoubles {
 
     @Test
@@ -64,8 +61,10 @@ public class PersistentCookieJarTestWithTestDoubles {
     public void loadForRequest_WithMatchingUrl_ShouldReturnMatchingCookies() {
         Cookie savedCookie = TestCookieCreator.createNonPersistentCookie();
         CookieCache cookieCache = mock(CookieCache.class);
-        when(cookieCache.hasNext()).thenReturn(true, false);
-        when(cookieCache.next()).thenReturn(savedCookie);
+        Iterator<Cookie> cookieIterator = mock(Iterator.class);
+        when(cookieCache.iterator()).thenReturn(cookieIterator);
+        when(cookieIterator.hasNext()).thenReturn(true, false);
+        when(cookieIterator.next()).thenReturn(savedCookie);
         PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, mock(CookiePersistor.class));
 
         List<Cookie> requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL);
@@ -78,9 +77,9 @@ public class PersistentCookieJarTestWithTestDoubles {
         Cookie savedCookie = TestCookieCreator.createNonPersistentCookie();
         CookieCache cookieCache = mock(CookieCache.class);
         Iterator<Cookie> iterator = mock(Iterator.class);
+        when(cookieCache.iterator()).thenReturn(iterator);
         when(iterator.hasNext()).thenReturn(true, false);
         when(iterator.next()).thenReturn(savedCookie);
-//        when(cookieCache.iterator()).thenReturn(iterator);
         PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, mock(CookiePersistor.class));
 
         List<Cookie> requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.OTHER_URL);
@@ -92,6 +91,7 @@ public class PersistentCookieJarTestWithTestDoubles {
     public void loadForRequest_WithExpiredCookieMatchingUrl_ShouldReturnEmptyCookieList() {
         CookieCache cookieCache = mock(CookieCache.class);
         Iterator<Cookie> iterator = mock(Iterator.class);
+        when(cookieCache.iterator()).thenReturn(iterator);
         when(iterator.hasNext()).thenReturn(true, false);
         when(iterator.next()).thenReturn(TestCookieCreator.createExpiredCookie());
         PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, mock(CookiePersistor.class));
@@ -105,14 +105,16 @@ public class PersistentCookieJarTestWithTestDoubles {
     public void loadForRequest_WithExpiredCookieMatchingUrl_ShouldRemoveTheCookie() {
         Cookie savedCookie = TestCookieCreator.createExpiredCookie();
         CookieCache cookieCache = mock(CookieCache.class);
-        when(cookieCache.hasNext()).thenReturn(true, false);
-        when(cookieCache.next()).thenReturn(savedCookie);
+        Iterator<Cookie> cookieIterator = mock(Iterator.class);
+        when(cookieCache.iterator()).thenReturn(cookieIterator);
+        when(cookieIterator.hasNext()).thenReturn(true, false);
+        when(cookieIterator.next()).thenReturn(savedCookie);
         CookiePersistor cookiePersistor = mock(CookiePersistor.class);
         PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, cookiePersistor);
 
         persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL);
 
-        verify(cookieCache, times(1)).remove();
+        verify(cookieIterator, times(1)).remove();
 
         ArgumentCaptor<Collection<Cookie>> cookiePersistorArgCaptor = ArgumentCaptor.forClass(Collection.class);
         verify(cookiePersistor).removeAll(cookiePersistorArgCaptor.capture());
