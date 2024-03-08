@@ -20,15 +20,13 @@ import org.robolectric.annotation.Config
 @Config(manifest = Config.NONE)
 class SharedPrefsCookiePersistorTest {
 
-    private val sharedPreferences: SharedPreferences = Mockito.spy(
+    private val sharedPreferences: SharedPreferences =
         ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-    )
     private val persistor: CookiePersistor = SharedPrefsCookiePersistor(sharedPreferences)
 
     @After
     fun clearPersistor() {
         persistor.clear()
-        Mockito.reset(sharedPreferences)
     }
 
     @Test
