@@ -1,5 +1,7 @@
-package com.andreuzaitsev.persistentcookiejar
+package com.andreuzaitsev.persistentcookiejar.robolectric
 
+import com.andreuzaitsev.persistentcookiejar.PersistentCookieJar
+import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import okhttp3.HttpUrl.Companion.toHttpUrl

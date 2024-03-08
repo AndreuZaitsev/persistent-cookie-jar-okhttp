@@ -1,7 +1,8 @@
-package com.andreuzaitsev.persistentcookiejar
+package com.andreuzaitsev.persistentcookiejar.robolectric
 
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor.Companion.PREFERENCES_NAME
