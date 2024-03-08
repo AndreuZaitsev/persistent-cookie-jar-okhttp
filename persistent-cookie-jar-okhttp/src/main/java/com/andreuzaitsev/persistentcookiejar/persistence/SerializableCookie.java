@@ -22,13 +22,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import okhttp3.Cookie;
 
 public class SerializableCookie implements Serializable {
     private static final String TAG = SerializableCookie.class.getSimpleName();
 
-    private static final long serialVersionUID = -8594045714036645534L;
+    @Serial private static final long serialVersionUID = -8594045714036645534L;
 
     private transient Cookie cookie;
 
@@ -123,7 +124,7 @@ public class SerializableCookie implements Serializable {
 
     private static final long NON_VALID_EXPIRES_AT = -1L;
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
+    @Serial private void writeObject(ObjectOutputStream out) throws IOException {
         out.writeObject(cookie.name());
         out.writeObject(cookie.value());
         out.writeLong(cookie.persistent() ? cookie.expiresAt() : NON_VALID_EXPIRES_AT);
@@ -134,7 +135,7 @@ public class SerializableCookie implements Serializable {
         out.writeBoolean(cookie.hostOnly());
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    @Serial private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         Cookie.Builder builder = new Cookie.Builder();
 
         builder.name((String) in.readObject());

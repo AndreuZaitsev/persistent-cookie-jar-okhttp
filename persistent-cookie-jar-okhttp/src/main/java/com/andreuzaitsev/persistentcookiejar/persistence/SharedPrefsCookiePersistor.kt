@@ -13,76 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.andreuzaitsev.persistentcookiejar.persistence
 
-package com.andreuzaitsev.persistentcookiejar.persistence;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
+import okhttp3.Cookie
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.SharedPreferences;
-import androidx.annotation.NonNull;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import okhttp3.Cookie;
+@SuppressLint("CommitPrefEdits", "ApplySharedPref")
+class SharedPrefsCookiePersistor(
+    private val sharedPreferences: SharedPreferences
+) : CookiePersistor {
 
-@SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
-public class SharedPrefsCookiePersistor implements CookiePersistor {
+    constructor(context: Context) : this(context.getSharedPreferences("CookiePersistence", Context.MODE_PRIVATE))
 
-    private final SharedPreferences sharedPreferences;
+    override fun loadAll(): List<Cookie> {
+        val cookies: MutableList<Cookie> = ArrayList(sharedPreferences.all.size)
 
-    public SharedPrefsCookiePersistor(Context context) {
-        this(context.getSharedPreferences("CookiePersistence", Context.MODE_PRIVATE));
-    }
-
-    public SharedPrefsCookiePersistor(SharedPreferences sharedPreferences) {
-        this.sharedPreferences = sharedPreferences;
-    }
-
-    @NonNull @Override
-    public List<Cookie> loadAll() {
-        List<Cookie> cookies = new ArrayList<>(sharedPreferences.getAll().size());
-
-        for (Map.Entry<String, ?> entry : sharedPreferences.getAll().entrySet()) {
-            String serializedCookie = (String) entry.getValue();
-
-            if (serializedCookie == null) {
-                continue;
-            }
-
-            Cookie cookie = new SerializableCookie().decode(serializedCookie);
+        for ((_, value) in sharedPreferences.all) {
+            val serializedCookie = value as String? ?: continue
+            val cookie = SerializableCookie().decode(serializedCookie)
             if (cookie != null) {
-                cookies.add(cookie);
+                cookies.add(cookie)
             }
         }
-
-        return cookies;
+        return cookies
     }
 
-    @Override
-    public void saveAll(Collection<Cookie> cookies) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        for (Cookie cookie : cookies) {
-            editor.putString(createCookieKey(cookie), new SerializableCookie().encode(cookie));
+    override fun saveAll(cookies: Collection<Cookie>) {
+        val editor = sharedPreferences.edit()
+        for (cookie in cookies) {
+            editor.putString(createCookieKey(cookie), SerializableCookie().encode(cookie))
         }
-        editor.commit();
+        editor.commit()
     }
 
-    @Override
-    public void removeAll(Collection<Cookie> cookies) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        for (Cookie cookie : cookies) {
-            editor.remove(createCookieKey(cookie));
+    override fun removeAll(cookies: Collection<Cookie>) {
+        val editor = sharedPreferences.edit()
+        for (cookie in cookies) {
+            editor.remove(createCookieKey(cookie))
         }
-        editor.commit();
+        editor.commit()
     }
 
-    private static String createCookieKey(Cookie cookie) {
-        return (cookie.secure() ? "https" : "http") + "://" + cookie.domain() + cookie.path() + "|" + cookie.name();
+    override fun clear() {
+        sharedPreferences.edit().clear().commit()
     }
 
-    @Override
-    public void clear() {
-        sharedPreferences.edit().clear().commit();
+    companion object {
+
+        private fun createCookieKey(cookie: Cookie): String =
+            "${if (cookie.secure) "https" else "http"}://${cookie.domain}${cookie.path}|${cookie.name}"
     }
 }
