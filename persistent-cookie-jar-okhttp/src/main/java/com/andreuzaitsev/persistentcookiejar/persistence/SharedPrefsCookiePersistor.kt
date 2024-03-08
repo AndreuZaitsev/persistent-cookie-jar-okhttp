@@ -25,7 +25,7 @@ class SharedPrefsCookiePersistor(
     private val sharedPreferences: SharedPreferences
 ) : CookiePersistor {
 
-    constructor(context: Context) : this(context.getSharedPreferences("CookiePersistence", Context.MODE_PRIVATE))
+    constructor(context: Context) : this(context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE))
 
     override fun loadAll(): List<Cookie> {
         val cookies: MutableList<Cookie> = ArrayList(sharedPreferences.all.size)
@@ -61,6 +61,8 @@ class SharedPrefsCookiePersistor(
     }
 
     companion object {
+
+        const val PREFERENCES_NAME = "CookiePersistence"
 
         private fun createCookieKey(cookie: Cookie): String =
             "${if (cookie.secure) "https" else "http"}://${cookie.domain}${cookie.path}|${cookie.name}"

@@ -1,82 +1,81 @@
-package com.andreuzaitsev.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar
 
-import okhttp3.Cookie;
-import okhttp3.HttpUrl;
+import okhttp3.Cookie
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
-/**
- * Created by Francisco J. Montiel on 11/02/16.
- */
-class TestCookieCreator {
+internal object TestCookieCreator {
 
-    private static final String DEFAULT_DOMAIN = "domain.com";
-    private static final String DEFAULT_PATH = "/";
+    private const val DEFAULT_DOMAIN = "domain.com"
+    private const val DEFAULT_PATH = "/"
 
-    public static final HttpUrl DEFAULT_URL = HttpUrl.parse("https://" + DEFAULT_DOMAIN + DEFAULT_PATH);
-    public static final HttpUrl OTHER_URL = HttpUrl.parse("https://otherdomain.com/");
+    @JvmField
+    val DEFAULT_URL = "https://$DEFAULT_DOMAIN$DEFAULT_PATH".toHttpUrl()
 
-    private TestCookieCreator() {
-    }
+    @JvmField
+    val OTHER_URL = "https://otherdomain.com/".toHttpUrl()
 
-    public static Cookie createPersistentCookie(boolean hostOnlyDomain) {
-        Cookie.Builder builder = new Cookie.Builder()
-                .path(DEFAULT_PATH)
-                .name("name")
-                .value("value")
-                .expiresAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000)
-                .httpOnly()
-                .secure();
+    @JvmStatic
+    fun createPersistentCookie(hostOnlyDomain: Boolean): Cookie {
+        val builder = Cookie.Builder()
+            .path(DEFAULT_PATH)
+            .name("name")
+            .value("value")
+            .expiresAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000)
+            .httpOnly()
+            .secure()
         if (hostOnlyDomain) {
-            builder.hostOnlyDomain(DEFAULT_DOMAIN);
+            builder.hostOnlyDomain(DEFAULT_DOMAIN)
         } else {
-            builder.domain(DEFAULT_DOMAIN);
+            builder.domain(DEFAULT_DOMAIN)
         }
-        return builder.build();
+        return builder.build()
     }
 
-    public static Cookie createPersistentCookie(String name, String value) {
-        return new Cookie.Builder()
-                .domain(DEFAULT_DOMAIN)
-                .path(DEFAULT_PATH)
-                .name(name)
-                .value(value)
-                .expiresAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000)
-                .httpOnly()
-                .secure()
-                .build();
+    fun createPersistentCookie(name: String, value: String): Cookie {
+        return Cookie.Builder()
+            .domain(DEFAULT_DOMAIN)
+            .path(DEFAULT_PATH)
+            .name(name)
+            .value(value)
+            .expiresAt(System.currentTimeMillis() + 24 * 60 * 60 * 1000)
+            .httpOnly()
+            .secure()
+            .build()
     }
 
-    public static Cookie createNonPersistentCookie() {
-        return new Cookie.Builder()
-                .domain(DEFAULT_DOMAIN)
-                .path(DEFAULT_PATH)
-                .name("name")
-                .value("value")
-                .httpOnly()
-                .secure()
-                .build();
+    @JvmStatic
+    fun createNonPersistentCookie(): Cookie {
+        return Cookie.Builder()
+            .domain(DEFAULT_DOMAIN)
+            .path(DEFAULT_PATH)
+            .name("name")
+            .value("value")
+            .httpOnly()
+            .secure()
+            .build()
     }
 
-    public static Cookie createNonPersistentCookie(String name, String value) {
-        return new Cookie.Builder()
-                .domain(DEFAULT_DOMAIN)
-                .path(DEFAULT_PATH)
-                .name(name)
-                .value(value)
-                .httpOnly()
-                .secure()
-                .build();
+    fun createNonPersistentCookie(name: String, value: String): Cookie {
+        return Cookie.Builder()
+            .domain(DEFAULT_DOMAIN)
+            .path(DEFAULT_PATH)
+            .name(name)
+            .value(value)
+            .httpOnly()
+            .secure()
+            .build()
     }
 
-
-    public static Cookie createExpiredCookie() {
-        return new Cookie.Builder()
-                .domain(DEFAULT_DOMAIN)
-                .path(DEFAULT_PATH)
-                .name("name")
-                .value("value")
-                .expiresAt(Long.MIN_VALUE)
-                .httpOnly()
-                .secure()
-                .build();
+    @JvmStatic
+    fun createExpiredCookie(): Cookie {
+        return Cookie.Builder()
+            .domain(DEFAULT_DOMAIN)
+            .path(DEFAULT_PATH)
+            .name("name")
+            .value("value")
+            .expiresAt(Long.MIN_VALUE)
+            .httpOnly()
+            .secure()
+            .build()
     }
 }

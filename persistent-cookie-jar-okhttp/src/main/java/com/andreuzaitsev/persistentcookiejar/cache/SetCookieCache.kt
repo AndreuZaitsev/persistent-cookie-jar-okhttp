@@ -22,6 +22,8 @@ import okhttp3.Cookie
 class SetCookieCache : CookieCache {
 
     private val cookies: MutableSet<IdentifiableCookie> = Collections.newSetFromMap(ConcurrentHashMap())
+    private val iterator: MutableIterator<IdentifiableCookie>
+        get() = cookies.iterator()
 
     override fun addAll(cookies: Collection<Cookie>) {
         for (cookie in IdentifiableCookie.decorateAll(cookies)) {
@@ -30,24 +32,15 @@ class SetCookieCache : CookieCache {
         }
     }
 
-    override fun removeAll(cookiesToRemove: Collection<Cookie>) {
-        IdentifiableCookie.decorateAll(cookiesToRemove).forEach(this.cookies::remove)
+    override fun remove() {
+        iterator.remove()
     }
 
     override fun clear() {
         cookies.clear()
     }
 
-    override fun iterator(): Iterator<Cookie> = SetCookieCacheIterator()
+    override fun hasNext(): Boolean = iterator.hasNext()
 
-    private inner class SetCookieCacheIterator : MutableIterator<Cookie> {
-
-        private val iterator: MutableIterator<IdentifiableCookie> = cookies.iterator()
-
-        override fun hasNext(): Boolean = iterator.hasNext()
-        override fun next(): Cookie = iterator.next().cookie
-        override fun remove() {
-            iterator.remove()
-        }
-    }
+    override fun next(): Cookie = iterator.next().cookie
 }

@@ -21,47 +21,49 @@ import okhttp3.Cookie
 import okhttp3.HttpUrl
 
 class PersistentCookieJar(
-    private val cache: CookieCache,
-    private val persistor: CookiePersistor
+    private val cookieCache: CookieCache,
+    private val cookieStorage: CookiePersistor
 ) : ClearableCookieJar {
 
     init {
-        cache.addAll(persistor.loadAll())
+        cookieCache.addAll(cookieStorage.loadAll())
     }
 
     @Synchronized
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-        cache.addAll(cookies)
-        persistor.saveAll(filterPersistentCookies(cookies))
+        cookieCache.addAll(cookies)
+        cookieStorage.saveAll(cookies.filter { it.persistent })
     }
 
     @Synchronized
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        val cookiesToRemove = cache.filter { isCookieExpired(it) }
-        val validCookies = cache.filter { !isCookieExpired(it) && it.matches(url) }
-        // Remove all expired cookies
-        cache.removeAll(cookiesToRemove)
-        // Persist the removal of the expired cookies
-        persistor.removeAll(cookiesToRemove)
+        val expiredCookies: MutableList<Cookie> = mutableListOf()
+        val validCookies: MutableList<Cookie> = mutableListOf()
+
+        while (cookieCache.hasNext()) {
+            val currentCookie = cookieCache.next()
+            if (isCookieExpired(currentCookie)) {
+                expiredCookies += currentCookie
+                cookieCache.remove()
+            } else if (currentCookie.matches(url)) {
+                validCookies += currentCookie
+            }
+        }
+        cookieStorage.removeAll(expiredCookies)
         return validCookies
     }
 
+    private fun isCookieExpired(cookie: Cookie): Boolean = cookie.expiresAt < System.currentTimeMillis()
+
     @Synchronized
     override fun clearSession() {
-        cache.clear()
-        cache.addAll(persistor.loadAll())
+        cookieCache.clear()
+        cookieCache.addAll(cookieStorage.loadAll())
     }
 
     @Synchronized
     override fun clear() {
-        cache.clear()
-        persistor.clear()
-    }
-
-    companion object {
-
-        private fun filterPersistentCookies(cookies: List<Cookie>): List<Cookie> = cookies.filter { it.persistent }
-
-        private fun isCookieExpired(cookie: Cookie): Boolean = cookie.expiresAt < System.currentTimeMillis()
+        cookieCache.clear()
+        cookieStorage.clear()
     }
 }

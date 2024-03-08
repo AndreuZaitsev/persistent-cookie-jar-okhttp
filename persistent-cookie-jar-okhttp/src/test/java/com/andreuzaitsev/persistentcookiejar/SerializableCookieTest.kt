@@ -1,44 +1,32 @@
-package com.andreuzaitsev.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar
 
-import com.andreuzaitsev.persistentcookiejar.persistence.SerializableCookie;
+import com.andreuzaitsev.persistentcookiejar.persistence.SerializableCookie
+import org.junit.Assert
+import org.junit.Test
 
-import org.junit.Test;
-
-import okhttp3.Cookie;
-
-import static org.junit.Assert.assertEquals;
-
-public class SerializableCookieTest {
+class SerializableCookieTest {
 
     @Test
-    public void cookieSerialization() throws Exception {
-        Cookie cookie = TestCookieCreator.createPersistentCookie(false);
-
-        String serializedCookie = new SerializableCookie().encode(cookie);
-        Cookie deserializedCookie = new SerializableCookie().decode(serializedCookie);
-
-        assertEquals(cookie, deserializedCookie);
+    fun cookieSerialization() {
+        val cookie = TestCookieCreator.createPersistentCookie(false)
+        val serializedCookie = SerializableCookie().encode(cookie)
+        val deserializedCookie = SerializableCookie().decode(serializedCookie!!)
+        Assert.assertEquals(cookie, deserializedCookie)
     }
 
     @Test
-    public void hostOnlyDomainCookieSerialization() throws Exception {
-        Cookie cookie = TestCookieCreator.createPersistentCookie(true);
-
-        String serializedCookie = new SerializableCookie().encode(cookie);
-        Cookie deserializedCookie = new SerializableCookie().decode(serializedCookie);
-
-        assertEquals(cookie, deserializedCookie);
+    fun hostOnlyDomainCookieSerialization() {
+        val cookie = TestCookieCreator.createPersistentCookie(true)
+        val serializedCookie = SerializableCookie().encode(cookie)
+        val deserializedCookie = SerializableCookie().decode(serializedCookie!!)
+        Assert.assertEquals(cookie, deserializedCookie)
     }
 
     @Test
-    public void nonPersistentCookieSerialization() throws Exception {
-        Cookie cookie = TestCookieCreator.createNonPersistentCookie();
-
-        String serializedCookie = new SerializableCookie().encode(cookie);
-        Cookie deserializedCookie = new SerializableCookie().decode(serializedCookie);
-
-        assertEquals(cookie, deserializedCookie);
+    fun nonPersistentCookieSerialization() {
+        val cookie = TestCookieCreator.createNonPersistentCookie()
+        val serializedCookie = SerializableCookie().encode(cookie)
+        val deserializedCookie = SerializableCookie().decode(serializedCookie!!)
+        Assert.assertEquals(cookie, deserializedCookie)
     }
-
-
 }

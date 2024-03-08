@@ -1,65 +1,54 @@
-package com.andreuzaitsev.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar
 
-import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache;
-
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import okhttp3.Cookie;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
+import org.junit.Assert
+import org.junit.Test
 
 /**
  * Created by Francisco J. Montiel on 11/02/16.
  */
-public class SetCookieCacheTest {
+class SetCookieCacheTest {
 
     @Test
-    public void clear_ShouldClearAllCookies() throws Exception {
-        SetCookieCache cache = new SetCookieCache();
-
-        Cookie cookie = TestCookieCreator.createPersistentCookie(false);
-        cache.addAll(Collections.singletonList(cookie));
-
-        cache.clear();
-
-        assertFalse(cache.hasNext());
+    fun clear_ShouldClearAllCookies() {
+        val cache = SetCookieCache()
+        val cookie = TestCookieCreator.createPersistentCookie(false)
+        cache.addAll(listOf(cookie))
+        cache.clear()
+        Assert.assertFalse(cache.hasNext())
     }
 
     /**
      * Cookie equality used to update: same cookie-name, domain-value, and path-value.
      */
     @Test
-    public void addAll_WithACookieEqualsToOneAlreadyAdded_ShouldUpdateTheStoreCookie() {
-        SetCookieCache cache = new SetCookieCache();
-        cache.addAll(Collections.singleton(TestCookieCreator.createNonPersistentCookie("name", "first")));
-
-        Cookie newCookie = TestCookieCreator.createNonPersistentCookie("name", "last");
-        cache.addAll(Collections.singleton(newCookie));
-
-        Cookie addedCookie = cache.next();
-        assertEquals(newCookie, addedCookie);
+    fun addAll_WithACookieEqualsToOneAlreadyAdded_ShouldUpdateTheStoreCookie() {
+        val cache = SetCookieCache()
+        cache.addAll(setOf(TestCookieCreator.createNonPersistentCookie("name", "first")))
+        val newCookie = TestCookieCreator.createNonPersistentCookie("name", "last")
+        cache.addAll(setOf(newCookie))
+        val addedCookie = cache.next()
+        Assert.assertEquals(newCookie, addedCookie)
     }
 
     /**
      * This is not RFC Compliant but strange things happen in the real world and it is intended to maintain a common behavior between Cache and Persistor
-     * <p>
+     *
+     *
      * Cookie equality used to update: same cookie-name, domain-value, and path-value.
      */
     @Test
-    public void addAll_WithMultipleEqualCookies_LastOneShouldBeAdded() {
-        SetCookieCache cache = new SetCookieCache();
-        Cookie equalCookieThatShouldNotBeAdded = TestCookieCreator.createPersistentCookie("name", "first");
-        Cookie equalCookieThatShouldBeAdded = TestCookieCreator.createPersistentCookie("name", "last");
-
-        cache.addAll(Arrays.asList(
+    fun addAll_WithMultipleEqualCookies_LastOneShouldBeAdded() {
+        val cache = SetCookieCache()
+        val equalCookieThatShouldNotBeAdded = TestCookieCreator.createPersistentCookie("name", "first")
+        val equalCookieThatShouldBeAdded = TestCookieCreator.createPersistentCookie("name", "last")
+        cache.addAll(
+            listOf(
                 equalCookieThatShouldNotBeAdded,
-                equalCookieThatShouldBeAdded));
-
-        Cookie addedCookie = cache.next();
-        assertEquals(equalCookieThatShouldBeAdded, addedCookie);
+                equalCookieThatShouldBeAdded
+            )
+        )
+        val addedCookie = cache.next()
+        Assert.assertEquals(equalCookieThatShouldBeAdded, addedCookie)
     }
 }
