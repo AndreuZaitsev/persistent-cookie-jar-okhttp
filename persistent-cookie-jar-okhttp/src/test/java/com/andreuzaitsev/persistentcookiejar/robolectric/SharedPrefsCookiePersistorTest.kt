@@ -13,6 +13,7 @@ import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
+import org.mockito.kotlin.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -22,6 +23,8 @@ class SharedPrefsCookiePersistorTest {
 
     private val sharedPreferences: SharedPreferences =
         ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+
+    private val mockedSharedPreferences = mock<SharedPreferences>()
     private val persistor: CookiePersistor = SharedPrefsCookiePersistor(sharedPreferences)
 
     @After
@@ -86,9 +89,9 @@ class SharedPrefsCookiePersistorTest {
 
     @Test
     fun loadAll_WithCorruptedCookie_ShouldSkipCookie() {
-        val corruptedCookies: MutableMap<String, String> = HashMap()
+        val corruptedCookies = mutableMapOf<String, String>()
         corruptedCookies["key"] = "invalidCookie_"
-        Mockito.doReturn(corruptedCookies).`when`(sharedPreferences).all
+        Mockito.doReturn(corruptedCookies).`when`(mockedSharedPreferences).all
         Assert.assertTrue(persistor.loadAll().isEmpty())
     }
 }
