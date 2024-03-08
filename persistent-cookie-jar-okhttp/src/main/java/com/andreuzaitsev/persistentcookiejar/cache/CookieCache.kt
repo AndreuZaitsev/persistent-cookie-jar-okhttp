@@ -30,6 +30,11 @@ interface CookieCache : Iterable<Cookie> {
     fun addAll(cookies: Collection<Cookie>)
 
     /**
+     * Remove [cookiesToRemove] from the session.
+     */
+    fun removeAll(cookiesToRemove: Collection<Cookie>)
+
+    /**
      * Clear all the cookies from the session.
      */
     fun clear()

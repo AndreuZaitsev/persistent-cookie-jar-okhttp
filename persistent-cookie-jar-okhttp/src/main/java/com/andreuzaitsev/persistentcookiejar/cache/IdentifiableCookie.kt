@@ -49,7 +49,7 @@ internal class IdentifiableCookie(val cookie: Cookie) {
         fun decorateAll(cookies: Collection<Cookie>): List<IdentifiableCookie> {
             val identifiableCookies: MutableList<IdentifiableCookie> = ArrayList(cookies.size)
             for (cookie in cookies) {
-                identifiableCookies.add(IdentifiableCookie(cookie))
+                identifiableCookies += IdentifiableCookie(cookie)
             }
             return identifiableCookies
         }

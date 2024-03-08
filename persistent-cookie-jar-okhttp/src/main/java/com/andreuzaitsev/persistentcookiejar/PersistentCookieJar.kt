@@ -13,82 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.andreuzaitsev.persistentcookiejar
 
-package com.andreuzaitsev.persistentcookiejar;
+import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
+import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import okhttp3.Cookie
+import okhttp3.HttpUrl
 
-import androidx.annotation.NonNull;
-import com.andreuzaitsev.persistentcookiejar.cache.CookieCache;
-import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import okhttp3.Cookie;
-import okhttp3.HttpUrl;
+class PersistentCookieJar(
+    private val cache: CookieCache,
+    private val persistor: CookiePersistor
+) : ClearableCookieJar {
 
-public class PersistentCookieJar implements ClearableCookieJar {
-
-    private final CookieCache cache;
-    private final CookiePersistor persistor;
-
-    public PersistentCookieJar(CookieCache cache, CookiePersistor persistor) {
-        this.cache = cache;
-        this.persistor = persistor;
-
-        this.cache.addAll(persistor.loadAll());
+    init {
+        cache.addAll(persistor.loadAll())
     }
 
-    @Override
-    synchronized public void saveFromResponse(@NonNull HttpUrl url, @NonNull List<Cookie> cookies) {
-        cache.addAll(cookies);
-        persistor.saveAll(filterPersistentCookies(cookies));
+    @Synchronized
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        cache.addAll(cookies)
+        persistor.saveAll(filterPersistentCookies(cookies))
     }
 
-    private static List<Cookie> filterPersistentCookies(List<Cookie> cookies) {
-        List<Cookie> persistentCookies = new ArrayList<>();
-
-        for (Cookie cookie : cookies) {
-            if (cookie.persistent()) {
-                persistentCookies.add(cookie);
-            }
-        }
-        
-        return persistentCookies;
+    @Synchronized
+    override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        val cookiesToRemove = cache.filter { isCookieExpired(it) }
+        val validCookies = cache.filter { !isCookieExpired(it) && it.matches(url) }
+        // Remove all expired cookies
+        cache.removeAll(cookiesToRemove)
+        // Persist the removal of the expired cookies
+        persistor.removeAll(cookiesToRemove)
+        return validCookies
     }
 
-    @NonNull @Override
-    synchronized public List<Cookie> loadForRequest(@NonNull HttpUrl url) {
-        List<Cookie> cookiesToRemove = new ArrayList<>();
-        List<Cookie> validCookies = new ArrayList<>();
-
-        for (Iterator<Cookie> it = cache.iterator(); it.hasNext(); ) {
-            Cookie currentCookie = it.next();
-
-            if (isCookieExpired(currentCookie)) {
-                cookiesToRemove.add(currentCookie);
-                it.remove();
-            } else if (currentCookie.matches(url)) {
-                validCookies.add(currentCookie);
-            }
-        }
-
-        persistor.removeAll(cookiesToRemove);
-
-        return validCookies;
+    @Synchronized
+    override fun clearSession() {
+        cache.clear()
+        cache.addAll(persistor.loadAll())
     }
 
-    private static boolean isCookieExpired(Cookie cookie) {
-        return cookie.expiresAt() < System.currentTimeMillis();
+    @Synchronized
+    override fun clear() {
+        cache.clear()
+        persistor.clear()
     }
 
-    @Override
-    synchronized public void clearSession() {
-        cache.clear();
-        cache.addAll(persistor.loadAll());
-    }
+    companion object {
 
-    @Override
-    synchronized public void clear() {
-        cache.clear();
-        persistor.clear();
+        private fun filterPersistentCookies(cookies: List<Cookie>): List<Cookie> = cookies.filter { it.persistent }
+
+        private fun isCookieExpired(cookie: Cookie): Boolean = cookie.expiresAt < System.currentTimeMillis()
     }
 }

@@ -30,6 +30,10 @@ class SetCookieCache : CookieCache {
         }
     }
 
+    override fun removeAll(cookiesToRemove: Collection<Cookie>) {
+        IdentifiableCookie.decorateAll(cookiesToRemove).forEach(this.cookies::remove)
+    }
+
     override fun clear() {
         cookies.clear()
     }
