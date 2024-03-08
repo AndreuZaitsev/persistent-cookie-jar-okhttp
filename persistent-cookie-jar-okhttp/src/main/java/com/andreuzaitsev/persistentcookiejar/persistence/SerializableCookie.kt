@@ -13,155 +13,146 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.andreuzaitsev.persistentcookiejar.persistence
 
-package com.andreuzaitsev.persistentcookiejar.persistence;
+import android.util.Log
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.Serial
+import java.io.Serializable
+import okhttp3.Cookie
 
-import android.util.Log;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.io.Serializable;
-import okhttp3.Cookie;
+class SerializableCookie : Serializable {
 
-public class SerializableCookie implements Serializable {
-    private static final String TAG = SerializableCookie.class.getSimpleName();
+    @Transient
+    private var cookie: Cookie? = null
 
-    @Serial private static final long serialVersionUID = -8594045714036645534L;
-
-    private transient Cookie cookie;
-
-    public String encode(Cookie cookie) {
-        this.cookie = cookie;
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = null;
-
+    fun encode(cookie: Cookie?): String? {
+        this.cookie = cookie
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        var objectOutputStream: ObjectOutputStream? = null
         try {
-            objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-            objectOutputStream.writeObject(this);
-        } catch (IOException e) {
-            Log.d(TAG, "IOException in encodeCookie", e);
-            return null;
+            objectOutputStream = ObjectOutputStream(byteArrayOutputStream)
+            objectOutputStream.writeObject(this)
+        } catch (e: IOException) {
+            Log.d(TAG, "IOException in encodeCookie", e)
+            return null
         } finally {
             if (objectOutputStream != null) {
                 try {
-                    // Closing a ByteArrayOutputStream has no effect, it can be used later (and is used in the return statement)
-                    objectOutputStream.close();
-                } catch (IOException e) {
-                    Log.d(TAG, "Stream not closed in encodeCookie", e);
+                    // Closing a ByteArrayOutputStream has no effect,
+                    // it can be used later (and is used in the return statement)
+                    objectOutputStream.close()
+                } catch (e: IOException) {
+                    Log.d(TAG, "Stream not closed in encodeCookie", e)
                 }
             }
         }
-
-        return byteArrayToHexString(byteArrayOutputStream.toByteArray());
+        return byteArrayToHexString(byteArrayOutputStream.toByteArray())
     }
 
-    /**
-     * Using some super basic byte array &lt;-&gt; hex conversions so we don't
-     * have to rely on any large Base64 libraries. Can be overridden if you
-     * like!
-     *
-     * @param bytes byte array to be converted
-     * @return string containing hex values
-     */
-    private static String byteArrayToHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder(bytes.length * 2);
-        for (byte element : bytes) {
-            int v = element & 0xff;
-            if (v < 16) {
-                sb.append('0');
-            }
-            sb.append(Integer.toHexString(v));
-        }
-        return sb.toString();
-    }
-
-    public Cookie decode(String encodedCookie) {
-
-        byte[] bytes = hexStringToByteArray(encodedCookie);
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
-                bytes);
-
-        Cookie cookie = null;
-        ObjectInputStream objectInputStream = null;
+    fun decode(encodedCookie: String): Cookie? {
+        val bytes = hexStringToByteArray(encodedCookie)
+        val byteArrayInputStream = ByteArrayInputStream(
+            bytes)
+        var cookie: Cookie? = null
+        var objectInputStream: ObjectInputStream? = null
         try {
-            objectInputStream = new ObjectInputStream(byteArrayInputStream);
-            cookie = ((SerializableCookie) objectInputStream.readObject()).cookie;
-        } catch (IOException e) {
-            Log.d(TAG, "IOException in decodeCookie", e);
-        } catch (ClassNotFoundException e) {
-            Log.d(TAG, "ClassNotFoundException in decodeCookie", e);
+            objectInputStream = ObjectInputStream(byteArrayInputStream)
+            cookie = (objectInputStream.readObject() as SerializableCookie).cookie
+        } catch (e: IOException) {
+            Log.d(TAG, "IOException in decodeCookie", e)
+        } catch (e: ClassNotFoundException) {
+            Log.d(TAG, "ClassNotFoundException in decodeCookie", e)
         } finally {
             if (objectInputStream != null) {
                 try {
-                    objectInputStream.close();
-                } catch (IOException e) {
-                    Log.d(TAG, "Stream not closed in decodeCookie", e);
+                    objectInputStream.close()
+                } catch (e: IOException) {
+                    Log.d(TAG, "Stream not closed in decodeCookie", e)
                 }
             }
         }
-        return cookie;
+        return cookie
     }
 
-    /**
-     * Converts hex values from strings to byte array
-     *
-     * @param hexString string of hex-encoded values
-     * @return decoded byte array
-     */
-    private static byte[] hexStringToByteArray(String hexString) {
-        int len = hexString.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) + Character
-                    .digit(hexString.charAt(i + 1), 16));
-        }
-        return data;
+    @Serial @Throws(IOException::class)
+    private fun writeObject(out: ObjectOutputStream) {
+        out.writeObject(cookie!!.name)
+        out.writeObject(cookie!!.value)
+        out.writeLong(if (cookie!!.persistent) cookie!!.expiresAt else NON_VALID_EXPIRES_AT)
+        out.writeObject(cookie!!.domain)
+        out.writeObject(cookie!!.path)
+        out.writeBoolean(cookie!!.secure)
+        out.writeBoolean(cookie!!.httpOnly)
+        out.writeBoolean(cookie!!.hostOnly)
     }
 
-    private static final long NON_VALID_EXPIRES_AT = -1L;
-
-    @Serial private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(cookie.name());
-        out.writeObject(cookie.value());
-        out.writeLong(cookie.persistent() ? cookie.expiresAt() : NON_VALID_EXPIRES_AT);
-        out.writeObject(cookie.domain());
-        out.writeObject(cookie.path());
-        out.writeBoolean(cookie.secure());
-        out.writeBoolean(cookie.httpOnly());
-        out.writeBoolean(cookie.hostOnly());
-    }
-
-    @Serial private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        Cookie.Builder builder = new Cookie.Builder();
-
-        builder.name((String) in.readObject());
-
-        builder.value((String) in.readObject());
-
-        long expiresAt = in.readLong();
+    @Serial @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`in`: ObjectInputStream) {
+        val builder = Cookie.Builder()
+        builder.name(`in`.readObject() as String)
+        builder.value(`in`.readObject() as String)
+        val expiresAt = `in`.readLong()
         if (expiresAt != NON_VALID_EXPIRES_AT) {
-            builder.expiresAt(expiresAt);
+            builder.expiresAt(expiresAt)
         }
-
-        final String domain = (String) in.readObject();
-        builder.domain(domain);
-
-        builder.path((String) in.readObject());
-
-        if (in.readBoolean())
-            builder.secure();
-
-        if (in.readBoolean())
-            builder.httpOnly();
-
-        if (in.readBoolean())
-            builder.hostOnlyDomain(domain);
-
-        cookie = builder.build();
+        val domain = `in`.readObject() as String
+        builder.domain(domain)
+        builder.path(`in`.readObject() as String)
+        if (`in`.readBoolean()) builder.secure()
+        if (`in`.readBoolean()) builder.httpOnly()
+        if (`in`.readBoolean()) builder.hostOnlyDomain(domain)
+        cookie = builder.build()
     }
 
+    companion object {
+
+        private val TAG = SerializableCookie::class.java.getSimpleName()
+
+        @Serial
+        private val serialVersionUID = -8594045714036645534L
+
+        /**
+         * Using some super basic byte array &lt;-&gt; hex conversions so we don't
+         * have to rely on any large Base64 libraries. Can be overridden if you
+         * like!
+         *
+         * @param bytes byte array to be converted
+         * @return string containing hex values
+         */
+        private fun byteArrayToHexString(bytes: ByteArray): String {
+            val sb = StringBuilder(bytes.size * 2)
+            for (element in bytes) {
+                val v = element.toInt() and 0xff
+                if (v < 16) {
+                    sb.append('0')
+                }
+                sb.append(Integer.toHexString(v))
+            }
+            return sb.toString()
+        }
+
+        /**
+         * Converts hex values from strings to byte array
+         *
+         * @param hexString string of hex-encoded values
+         * @return decoded byte array
+         */
+        private fun hexStringToByteArray(hexString: String): ByteArray {
+            val len = hexString.length
+            val data = ByteArray(len / 2)
+            for (i in 0 until len step 2) {
+                val firstPart = Character.digit(hexString[i], 16) shl 4
+                val secondPart = Character.digit(hexString[i + 1], 16)
+                data[i / 2] = (firstPart + secondPart).toByte()
+            }
+            return data
+        }
+
+        private const val NON_VALID_EXPIRES_AT = -1L
+    }
 }
