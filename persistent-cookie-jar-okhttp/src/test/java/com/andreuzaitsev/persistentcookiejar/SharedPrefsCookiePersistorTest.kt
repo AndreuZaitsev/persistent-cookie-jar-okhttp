@@ -1,0 +1,94 @@
+package com.andreuzaitsev.persistentcookiejar
+
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
+import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor.Companion.PREFERENCES_NAME
+import org.junit.After
+import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
+class SharedPrefsCookiePersistorTest {
+
+    private val sharedPreferences: SharedPreferences = Mockito.spy(
+        RuntimeEnvironment.getApplication().applicationContext.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+    )
+    private val persistor: CookiePersistor = SharedPrefsCookiePersistor(sharedPreferences)
+
+    @After
+    fun clearPersistor() {
+        persistor.clear()
+        Mockito.reset(sharedPreferences)
+    }
+
+    @Test
+    fun saveAll_ShouldSaveCookies() {
+        val cookie = TestCookieCreator.createPersistentCookie(false)
+        persistor.saveAll(listOf(cookie))
+        val cookies = persistor.loadAll()
+        Assert.assertEquals(cookie, cookies[0])
+    }
+
+    @Test
+    fun removeAll_ShouldRemoveCookies() {
+        val cookie = TestCookieCreator.createPersistentCookie(false)
+        persistor.saveAll(listOf(cookie))
+        persistor.removeAll(listOf(cookie))
+        Assert.assertTrue(persistor.loadAll().isEmpty())
+    }
+
+    @Test
+    fun clear_ShouldClearAllCookies() {
+        val cookie = TestCookieCreator.createPersistentCookie(false)
+        persistor.saveAll(listOf(cookie))
+        persistor.clear()
+        Assert.assertTrue(persistor.loadAll().isEmpty())
+    }
+
+    /**
+     * Cookie equality used to update: same cookie-name, domain-value, and path-value.
+     */
+    @Test
+    fun addAll_WithACookieEqualsToOneAlreadyPersisted_ShouldUpdatePersistedCookie() {
+        persistor.saveAll(listOf(TestCookieCreator.createPersistentCookie("name", "first")))
+        val lastCookieThatShouldBeSaved = TestCookieCreator.createPersistentCookie("name", "last")
+        persistor.saveAll(listOf(lastCookieThatShouldBeSaved))
+        val addedCookie = persistor.loadAll()[0]
+        Assert.assertEquals(lastCookieThatShouldBeSaved, addedCookie)
+    }
+
+    /**
+     * This is not RFC compliant but strange things happen in the real world and it is intended to maintain a common
+     * behavior between Cache and Persistor
+     *
+     *
+     * Cookie equality used to update: same cookie-name, domain-value, and path-value.
+     */
+    @Test
+    fun saveAll_WithMultipleEqualCookies_LastOneShouldBePersisted() {
+        val equalCookieThatShouldNotBeAdded = TestCookieCreator.createPersistentCookie("name", "first")
+        val equalCookieThatShouldBeAdded = TestCookieCreator.createPersistentCookie("name", "last")
+        persistor.saveAll(listOf(
+            equalCookieThatShouldNotBeAdded,
+            equalCookieThatShouldBeAdded
+        ))
+        val addedCookie = persistor.loadAll()[0]
+        Assert.assertEquals(equalCookieThatShouldBeAdded, addedCookie)
+    }
+
+    @Test
+    fun loadAll_WithCorruptedCookie_ShouldSkipCookie() {
+        val corruptedCookies: MutableMap<String, String> = HashMap()
+        corruptedCookies["key"] = "invalidCookie_"
+        Mockito.doReturn(corruptedCookies).`when`(sharedPreferences).all
+        Assert.assertTrue(persistor.loadAll().isEmpty())
+    }
+}
