@@ -1,7 +1,7 @@
-package com.thomasbouvier.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar;
 
-import com.thomasbouvier.persistentcookiejar.cache.CookieCache;
-import com.thomasbouvier.persistentcookiejar.persistence.CookiePersistor;
+import com.andreuzaitsev.persistentcookiejar.cache.CookieCache;
+import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

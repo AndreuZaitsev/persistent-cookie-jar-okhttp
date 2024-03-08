@@ -1,7 +1,7 @@
-package com.thomasbouvier.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar;
 
-import com.thomasbouvier.persistentcookiejar.cache.SetCookieCache;
-import com.thomasbouvier.persistentcookiejar.persistence.SharedPrefsCookiePersistor;
+import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache;
+import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor;
 
 import org.junit.After;
 import org.junit.Before;

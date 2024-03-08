@@ -1,4 +1,4 @@
-package com.thomasbouvier.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;

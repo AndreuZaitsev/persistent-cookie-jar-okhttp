@@ -1,6 +1,6 @@
-package com.thomasbouvier.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar;
 
-import com.thomasbouvier.persistentcookiejar.cache.SetCookieCache;
+import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache;
 
 import org.junit.Test;
 
