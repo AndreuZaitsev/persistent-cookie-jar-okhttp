@@ -23,7 +23,7 @@ private val Context.dataStore by preferencesDataStore(
     }
 )
 
-internal class DataStorePersistor(
+class DataStorePersistor(
     private val dataStore: DataStore<Preferences>
 ) : CoroutineCookiePersistor {
 

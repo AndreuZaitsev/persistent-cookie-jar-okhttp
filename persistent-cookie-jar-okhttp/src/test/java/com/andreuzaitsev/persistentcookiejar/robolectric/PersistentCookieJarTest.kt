@@ -2,7 +2,7 @@ package com.andreuzaitsev.persistentcookiejar.robolectric
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.andreuzaitsev.persistentcookiejar.PersistentCookieJar
+import com.andreuzaitsev.persistentcookiejar.PreferencesPersistentCookieJar
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -12,8 +12,6 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
-import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -21,7 +19,7 @@ import org.robolectric.annotation.Config
 @Config(manifest = Config.NONE)
 class PersistentCookieJarTest {
 
-    private val persistentCookieJar: PersistentCookieJar = PersistentCookieJar(
+    private val persistentCookieJar: PreferencesPersistentCookieJar = PreferencesPersistentCookieJar(
         SetCookieCache(),
         SharedPrefsCookiePersistor(ApplicationProvider.getApplicationContext<Context>())
     )

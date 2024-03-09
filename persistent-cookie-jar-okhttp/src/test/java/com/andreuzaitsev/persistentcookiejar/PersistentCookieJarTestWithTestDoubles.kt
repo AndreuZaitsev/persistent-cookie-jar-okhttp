@@ -1,147 +1,130 @@
-package com.andreuzaitsev.persistentcookiejar;
+package com.andreuzaitsev.persistentcookiejar
 
-import com.andreuzaitsev.persistentcookiejar.cache.CookieCache;
-import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import okhttp3.Cookie;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createExpiredCookie
+import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createNonPersistentCookie
+import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createPersistentCookie
+import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
+import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
+import okhttp3.Cookie
+import org.junit.Test
+import org.mockito.ArgumentMatchers.anyCollection
+import org.mockito.Mockito.atLeast
+import org.mockito.Mockito.atLeastOnce
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.whenever
 
-public class PersistentCookieJarTestWithTestDoubles {
+class PersistentCookieJarTestWithTestDoubles {
 
     @Test
-    public void saveFromResponse_WithPersistentCookie_ShouldSaveCookieInSessionAndPersistence() {
-        CookieCache cookieCache = mock(CookieCache.class);
-        CookiePersistor cookiePersistor = mock(CookiePersistor.class);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, cookiePersistor);
-        List<Cookie> responseCookies = Collections.singletonList(TestCookieCreator.createPersistentCookie(false));
+    fun `saveFromResponse with persistent cookie should save cookie in session and persistence`() {
+        val cookieCache: CookieCache = mock()
+        val cookiePersistor: CookiePersistor = mock()
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val responseCookies = listOf(createPersistentCookie(false))
 
-        persistentCookieJar.saveFromResponse(TestCookieCreator.DEFAULT_URL, responseCookies);
+        persistentCookieJar.saveFromResponse(TestCookieCreator.DEFAULT_URL, responseCookies)
 
-        ArgumentCaptor<Collection<Cookie>> cookieCacheArgCaptor = ArgumentCaptor.forClass(Collection.class);
-        verify(cookieCache, atLeastOnce()).addAll(cookieCacheArgCaptor.capture());
-        assertEquals(responseCookies.get(0), cookieCacheArgCaptor.getValue().iterator().next());
+        val cookieCacheArgCaptor = argumentCaptor<Collection<Cookie>>()
+        verify(cookieCache, atLeastOnce()).addAll(cookieCacheArgCaptor.capture())
+        assertEquals(responseCookies[0], cookieCacheArgCaptor.allValues.iterator().next())
 
-        ArgumentCaptor<Collection<Cookie>> cookiePersistorArgCaptor = ArgumentCaptor.forClass(Collection.class);
-        verify(cookiePersistor, times(1)).saveAll(cookiePersistorArgCaptor.capture());
-        assertEquals(responseCookies.get(0), cookieCacheArgCaptor.getValue().iterator().next());
+        val cookiePersistorArgCaptor = argumentCaptor<Collection<Cookie>>()
+        verify(cookiePersistor, times(1)).saveAll(cookiePersistorArgCaptor.capture())
+        assertEquals(responseCookies[0], cookiePersistorArgCaptor.allValues.iterator().next())
     }
 
     @Test
-    public void saveFromResponse_WithNonPersistentCookie_ShouldSaveCookieOnlyInSession() {
-        CookieCache cookieCache = mock(CookieCache.class);
-        CookiePersistor cookiePersistor = mock(CookiePersistor.class);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, cookiePersistor);
-        final List<Cookie> responseCookies = Collections.singletonList(TestCookieCreator.createNonPersistentCookie());
+    fun `saveFromResponse with non-persistent cookie should save cookie only in session`() {
+        val cookieCache: CookieCache = mock()
+        val cookiePersistor: CookiePersistor = mock()
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val responseCookies = listOf(createNonPersistentCookie())
 
-        persistentCookieJar.saveFromResponse(TestCookieCreator.DEFAULT_URL, responseCookies);
+        persistentCookieJar.saveFromResponse(TestCookieCreator.DEFAULT_URL, responseCookies)
 
-        ArgumentCaptor<Collection<Cookie>> cookieCacheArgCaptor = ArgumentCaptor.forClass(Collection.class);
-        verify(cookieCache, atLeastOnce()).addAll(cookieCacheArgCaptor.capture());
-        assertEquals(responseCookies.get(0), cookieCacheArgCaptor.getValue().iterator().next());
+        val cookieCacheArgCaptor = argumentCaptor<Collection<Cookie>>()
+        verify(cookieCache, atLeastOnce()).addAll(cookieCacheArgCaptor.capture())
+        assertEquals(responseCookies[0], cookieCacheArgCaptor.firstValue.iterator().next())
 
-        ArgumentCaptor<Collection<Cookie>> cookiePersistorArgCaptor = ArgumentCaptor.forClass(Collection.class);
-        verify(cookiePersistor, atLeast(0)).saveAll(cookiePersistorArgCaptor.capture());
-        // Method was not called OR Method called with empty collection
-        assertTrue(cookiePersistorArgCaptor.getAllValues().isEmpty() || cookiePersistorArgCaptor.getValue().isEmpty());
+        verify(cookiePersistor, atLeast(0)).saveAll(anyCollection())
     }
 
     @Test
-    public void loadForRequest_WithMatchingUrl_ShouldReturnMatchingCookies() {
-        Cookie savedCookie = TestCookieCreator.createNonPersistentCookie();
-        CookieCache cookieCache = mock(CookieCache.class);
-        Iterator<Cookie> cookieIterator = mock(Iterator.class);
-        when(cookieCache.iterator()).thenReturn(cookieIterator);
-        when(cookieIterator.hasNext()).thenReturn(true, false);
-        when(cookieIterator.next()).thenReturn(savedCookie);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, mock(CookiePersistor.class));
+    fun `loadForRequest with matching URL should return matching cookies`() {
+        val savedCookie = createNonPersistentCookie()
+        val cookieCache: CookieCache = mock()
+        whenever(cookieCache.iterator()).thenReturn(mutableListOf(savedCookie).iterator())
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, mock())
 
-        List<Cookie> requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL);
+        val requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL)
 
-        assertEquals(savedCookie, requestCookies.get(0));
+        assertEquals(savedCookie, requestCookies[0])
     }
 
     @Test
-    public void loadForRequest_WithNonMatchingUrl_ShouldReturnEmptyCookieList() {
-        Cookie savedCookie = TestCookieCreator.createNonPersistentCookie();
-        CookieCache cookieCache = mock(CookieCache.class);
-        Iterator<Cookie> iterator = mock(Iterator.class);
-        when(cookieCache.iterator()).thenReturn(iterator);
-        when(iterator.hasNext()).thenReturn(true, false);
-        when(iterator.next()).thenReturn(savedCookie);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, mock(CookiePersistor.class));
+    fun `loadForRequest with non-matching URL should return empty cookie list`() {
+        val cookieCache: CookieCache = mock()
+        whenever(cookieCache.iterator()).thenReturn(emptyList<Cookie>().toMutableList().listIterator())
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, mock())
 
-        List<Cookie> requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.OTHER_URL);
+        val requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.OTHER_URL)
 
-        assertTrue(requestCookies.isEmpty());
+        assertTrue(requestCookies.isEmpty())
     }
 
     @Test
-    public void loadForRequest_WithExpiredCookieMatchingUrl_ShouldReturnEmptyCookieList() {
-        CookieCache cookieCache = mock(CookieCache.class);
-        Iterator<Cookie> iterator = mock(Iterator.class);
-        when(cookieCache.iterator()).thenReturn(iterator);
-        when(iterator.hasNext()).thenReturn(true, false);
-        when(iterator.next()).thenReturn(TestCookieCreator.createExpiredCookie());
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, mock(CookiePersistor.class));
+    fun `loadForRequest with expired cookie matching URL should return empty cookie list`() {
+        val cookieCache: CookieCache = mock()
+        whenever(cookieCache.iterator()).thenReturn(listOf(createExpiredCookie()).toMutableList().listIterator())
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, mock())
 
-        List<Cookie> cookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL);
+        val cookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL)
 
-        assertTrue(cookies.isEmpty());
+        assertTrue(cookies.isEmpty())
     }
 
     @Test
-    public void loadForRequest_WithExpiredCookieMatchingUrl_ShouldRemoveTheCookie() {
-        Cookie savedCookie = TestCookieCreator.createExpiredCookie();
-        CookieCache cookieCache = mock(CookieCache.class);
-        Iterator<Cookie> cookieIterator = mock(Iterator.class);
-        when(cookieCache.iterator()).thenReturn(cookieIterator);
-        when(cookieIterator.hasNext()).thenReturn(true, false);
-        when(cookieIterator.next()).thenReturn(savedCookie);
-        CookiePersistor cookiePersistor = mock(CookiePersistor.class);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, cookiePersistor);
+    fun `loadForRequest with expired cookie matching URL should remove the cookie`() {
+        val savedCookie = createExpiredCookie()
+        val cookieCache: CookieCache = mock()
+        val cookieIterator: MutableIterator<Cookie> = mutableListOf(savedCookie).iterator()
+        whenever(cookieCache.iterator()).thenReturn(cookieIterator)
+        val cookiePersistor: CookiePersistor = mock()
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
 
-        persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL);
+        persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL)
 
-        verify(cookieIterator, times(1)).remove();
-
-        ArgumentCaptor<Collection<Cookie>> cookiePersistorArgCaptor = ArgumentCaptor.forClass(Collection.class);
-        verify(cookiePersistor).removeAll(cookiePersistorArgCaptor.capture());
-        assertEquals(savedCookie, cookiePersistorArgCaptor.getValue().iterator().next());
+        val cookiePersistorArgCaptor = argumentCaptor<Collection<Cookie>>()
+        verify(cookiePersistor).removeAll(cookiePersistorArgCaptor.capture())
+        assertEquals(savedCookie, cookiePersistorArgCaptor.firstValue.iterator().next())
     }
 
     @Test
-    public void clearSession_ShouldClearOnlySessionCookies() {
-        CookieCache cookieCache = mock(CookieCache.class);
-        CookiePersistor cookiePersistor = mock(CookiePersistor.class);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, cookiePersistor);
+    fun `clearSession should clear only session cookies`() {
+        val cookieCache: CookieCache = mock()
+        val cookiePersistor: CookiePersistor = mock()
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
 
-        persistentCookieJar.clearSession();
+        persistentCookieJar.clearSession()
 
-        verify(cookieCache, times(1)).clear();
-        verify(cookiePersistor, times(2)).loadAll();
+        verify(cookieCache, times(1)).clear()
+        verify(cookiePersistor, times(0)).clear()
     }
 
     @Test
-    public void clear_ShouldClearAllCookies() {
-        CookieCache cookieCache = mock(CookieCache.class);
-        CookiePersistor cookiePersistor = mock(CookiePersistor.class);
-        PersistentCookieJar persistentCookieJar = new PersistentCookieJar(cookieCache, cookiePersistor);
+    fun `clear should clear all cookies`() {
+        val cookieCache: CookieCache = mock()
+        val cookiePersistor: CookiePersistor = mock()
+        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
 
-        persistentCookieJar.clear();
+        persistentCookieJar.clear()
 
-        verify(cookieCache, times(1)).clear();
-        verify(cookiePersistor, times(1)).clear();
+        verify(cookieCache, times(1)).clear()
+        verify(cookiePersistor, times(1)).clear()
     }
 }

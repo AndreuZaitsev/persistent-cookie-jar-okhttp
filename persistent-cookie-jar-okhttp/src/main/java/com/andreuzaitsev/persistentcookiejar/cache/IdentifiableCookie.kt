@@ -23,7 +23,7 @@ import okhttp3.Cookie
  *
  * This new behaviour will be useful in determining when an already existing cookie in session must be overwritten.
  */
-internal data class IdentifiableCookie(val cookie: Cookie) {
+internal class IdentifiableCookie(val cookie: Cookie) {
 
     override fun equals(other: Any?): Boolean {
         if (other !is IdentifiableCookie) return false

@@ -15,38 +15,24 @@
  */
 package com.andreuzaitsev.persistentcookiejar
 
-import android.content.Context
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
-import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
-import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
-import com.andreuzaitsev.persistentcookiejar.persistence.DataStorePersistor
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 
-class PersistentCookieJar(
-    private val cookieStorage: CoroutineCookiePersistor,
-    private val cookieCache: CookieCache = SetCookieCache(),
+class PreferencesPersistentCookieJar(
+    private val cookieCache: CookieCache,
+    private val cookieStorage: CookiePersistor
 ) : ClearableCookieJar {
 
-    constructor(context: Context) : this(DataStorePersistor(context))
-
-    private val mutex = Mutex()
-
     init {
-        runBlocking { initializeCookiesCache() } // todo avoid init
-    }
-
-    suspend fun initializeCookiesCache() {
         cookieCache.addAll(cookieStorage.loadAll())
     }
 
     @Synchronized
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         cookieCache.addAll(cookies)
-        runBlocking { cookieStorage.saveAll(cookies.filter { it.persistent }) }
+        cookieStorage.saveAll(cookies.filter { it.persistent })
     }
 
     @Synchronized
@@ -64,23 +50,21 @@ class PersistentCookieJar(
                 validCookies += currentCookie
             }
         }
-        runBlocking { cookieStorage.removeAll(expiredCookies) }
+        cookieStorage.removeAll(expiredCookies)
         return validCookies
     }
 
     private fun isCookieExpired(cookie: Cookie): Boolean = cookie.expiresAt < System.currentTimeMillis()
 
-    override suspend fun clearSession() {
-        mutex.withLock {
-            cookieCache.clear()
-            cookieCache.addAll(cookieStorage.loadAll())
-        }
+    @Synchronized
+    override fun clearSession() {
+        cookieCache.clear()
+        cookieCache.addAll(cookieStorage.loadAll())
     }
 
-    override suspend fun clear() {
-        mutex.withLock {
-            cookieCache.clear()
-            cookieStorage.clear()
-        }
+    @Synchronized
+    override fun clear() {
+        cookieCache.clear()
+        cookieStorage.clear()
     }
 }
