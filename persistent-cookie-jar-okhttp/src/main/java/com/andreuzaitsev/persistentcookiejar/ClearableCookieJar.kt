@@ -25,10 +25,10 @@ interface ClearableCookieJar : CookieJar {
     /**
      * Clear all the session cookies while maintaining the persisted ones.
      */
-    fun clearSession()
+    suspend fun clearSession()
 
     /**
      * Clear all the cookies from persistence and from the cache.
      */
-    fun clear()
+    suspend fun clear()
 }

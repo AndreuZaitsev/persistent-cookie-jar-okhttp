@@ -43,3 +43,11 @@ interface CookiePersistor {
      */
     fun clear()
 }
+
+interface CoroutineCookiePersistor {
+
+    suspend fun loadAll(): List<Cookie>
+    suspend fun saveAll(cookies: Collection<Cookie>)
+    suspend fun removeAll(cookies: Collection<Cookie>)
+    suspend fun clear()
+}

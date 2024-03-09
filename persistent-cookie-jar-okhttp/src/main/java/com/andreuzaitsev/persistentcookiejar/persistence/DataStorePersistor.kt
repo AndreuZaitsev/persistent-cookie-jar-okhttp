@@ -1,0 +1,58 @@
+package com.andreuzaitsev.persistentcookiejar.persistence
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.SharedPreferencesMigration
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor.Companion.COOKIES_PREFERENCES_NAME
+import com.andreuzaitsev.persistentcookiejar.persistence.SharedPrefsCookiePersistor.Companion.createCookieKey
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.toList
+import okhttp3.Cookie
+
+private val Context.dataStore by preferencesDataStore(
+    name = COOKIES_PREFERENCES_NAME,
+    produceMigrations = { context ->
+        // Since we're migrating from SharedPreferences, add a migration based on the
+        // SharedPreferences name
+        listOf(SharedPreferencesMigration(context, COOKIES_PREFERENCES_NAME))
+    }
+)
+
+internal class DataStorePersistor(
+    private val dataStore: DataStore<Preferences>
+) : CoroutineCookiePersistor {
+
+    constructor(context: Context) : this(context.dataStore)
+
+    override suspend fun loadAll(): List<Cookie> = dataStore.data
+        .filterIsInstance<String>()
+        .mapNotNull(SerializableCookie()::decode)
+        .toList()
+
+    override suspend fun saveAll(cookies: Collection<Cookie>) {
+        dataStore.edit { prefs ->
+            cookies
+                .asSequence()
+                .map { stringPreferencesKey(createCookieKey(it)) to SerializableCookie().encode(it).orEmpty() }
+                .forEach(prefs::plusAssign)
+        }
+    }
+
+    override suspend fun removeAll(cookies: Collection<Cookie>) {
+        dataStore.edit { prefs ->
+            cookies
+                .asSequence()
+                .map { stringPreferencesKey(createCookieKey(it)) }
+                .forEach(prefs::remove)
+        }
+    }
+
+    override suspend fun clear() {
+        dataStore.edit { it.clear() }
+    }
+}

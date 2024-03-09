@@ -21,11 +21,11 @@ import android.content.SharedPreferences
 import okhttp3.Cookie
 
 @SuppressLint("ApplySharedPref")
-class SharedPrefsCookiePersistor(
+internal class SharedPrefsCookiePersistor(
     private val sharedPreferences: SharedPreferences
 ) : CookiePersistor {
 
-    constructor(context: Context) : this(context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE))
+    constructor(context: Context) : this(context.getSharedPreferences(COOKIES_PREFERENCES_NAME, Context.MODE_PRIVATE))
 
     override fun loadAll(): List<Cookie> = sharedPreferences.all.values
         .filterIsInstance<String>()
@@ -53,9 +53,9 @@ class SharedPrefsCookiePersistor(
 
     companion object {
 
-        const val PREFERENCES_NAME = "CookiePersistence"
+        const val COOKIES_PREFERENCES_NAME = "CookiePersistence"
 
-        private fun createCookieKey(cookie: Cookie): String =
+        fun createCookieKey(cookie: Cookie): String =
             "${if (cookie.secure) "https" else "http"}://${cookie.domain}${cookie.path}|${cookie.name}"
     }
 }

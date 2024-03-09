@@ -19,7 +19,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import okhttp3.Cookie
 
-class SetCookieCache : CookieCache {
+internal class SetCookieCache : CookieCache {
 
     private val cookies: MutableSet<IdentifiableCookie> = Collections.newSetFromMap(ConcurrentHashMap())
 

@@ -16,23 +16,32 @@
 package com.andreuzaitsev.persistentcookiejar
 
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
-import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 
 class PersistentCookieJar(
     private val cookieCache: CookieCache,
-    private val cookieStorage: CookiePersistor
+    private val cookieStorage: CoroutineCookiePersistor
 ) : ClearableCookieJar {
 
+    private val mutex = Mutex()
+
     init {
+        runBlocking { initializeCookiesCache() } // todo avoid init
+    }
+
+    suspend fun initializeCookiesCache() {
         cookieCache.addAll(cookieStorage.loadAll())
     }
 
     @Synchronized
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         cookieCache.addAll(cookies)
-        cookieStorage.saveAll(cookies.filter { it.persistent })
+        runBlocking { cookieStorage.saveAll(cookies.filter { it.persistent }) }
     }
 
     @Synchronized
@@ -50,21 +59,23 @@ class PersistentCookieJar(
                 validCookies += currentCookie
             }
         }
-        cookieStorage.removeAll(expiredCookies)
+        runBlocking { cookieStorage.removeAll(expiredCookies) }
         return validCookies
     }
 
     private fun isCookieExpired(cookie: Cookie): Boolean = cookie.expiresAt < System.currentTimeMillis()
 
-    @Synchronized
-    override fun clearSession() {
-        cookieCache.clear()
-        cookieCache.addAll(cookieStorage.loadAll())
+    override suspend fun clearSession() {
+        mutex.withLock {
+            cookieCache.clear()
+            cookieCache.addAll(cookieStorage.loadAll())
+        }
     }
 
-    @Synchronized
-    override fun clear() {
-        cookieCache.clear()
-        cookieStorage.clear()
+    override suspend fun clear() {
+        mutex.withLock {
+            cookieCache.clear()
+            cookieStorage.clear()
+        }
     }
 }
