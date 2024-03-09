@@ -1,11 +1,12 @@
 plugins {
     id("com.android.library")
     id("kotlin-android")
+    id("maven-publish")
 }
 
 //apply plugin: 'com.github.dcendents.android-maven'
 
-//group = 'com.github.thomas-bouvier'
+group = 'com.github.andreu-zaitsev'
 
 android {
     namespace "com.andreuzaitsev.persistentcookiejar"
@@ -56,7 +57,6 @@ dependencies {
 }
 
 tasks.register('sourcesJar', Jar) {
-//    classifier = 'sources'
     from android.sourceSets.main.java.sourceFiles
 }
 
@@ -67,10 +67,39 @@ tasks.register('javadoc', Javadoc) {
 
 tasks.register('javadocJar', Jar) {
     dependsOn javadoc
-//    classifier = 'javadoc'
     from javadoc.destinationDir
 }
 
 tasks.register('classesJar', Jar) {
     from "$buildDir/intermediates/classes/release"
+}
+
+def myGroupId = "com.github.andreu-zaitsev"
+def myArtifactId = "persistent-cookie-jar-okhttp"
+def myVersion = "1.0.0"
+// com.github.andreu-zaitsev:persistent-cookie-jar:1.0.0
+def myLocalRepo = "ZaitsevLocalRepo"
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = myGroupId
+            artifactId = myArtifactId
+            version = myVersion
+            afterEvaluate { from components.release }
+        }
+    }
+    repositories {
+        maven {
+            name = myLocalRepo
+            url = "${project.buildDir}/repo"
+        }
+    }
+}
+
+tasks.register('generateRepo', Zip) {
+    def publishTask = tasks.named('publishReleasePublicationTo${myLocalRepo}Repository')
+    from publishTask.map { it.getRepository().getUrl() }
+    into myArtifactId
+    archiveFileName.set("${myArtifactId}.zip")
 }

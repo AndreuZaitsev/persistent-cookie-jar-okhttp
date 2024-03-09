@@ -15,8 +15,11 @@
  */
 package com.andreuzaitsev.persistentcookiejar
 
+import android.content.Context
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
+import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.DataStorePersistor
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,9 +27,11 @@ import okhttp3.Cookie
 import okhttp3.HttpUrl
 
 class PersistentCookieJar(
-    private val cookieCache: CookieCache,
-    private val cookieStorage: CoroutineCookiePersistor
+    private val cookieStorage: CoroutineCookiePersistor,
+    private val cookieCache: CookieCache = SetCookieCache(),
 ) : ClearableCookieJar {
+
+    constructor(context: Context) : this(DataStorePersistor(context))
 
     private val mutex = Mutex()
 
