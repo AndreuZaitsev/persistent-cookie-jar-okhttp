@@ -38,7 +38,7 @@ class SetCookieCache : CookieCache {
 
     private inner class SetCookieCacheIterator : MutableIterator<Cookie> {
 
-        private val iterator: MutableIterator<IdentifiableCookie> = requireNotNull(cookies.iterator())
+        private val iterator: MutableIterator<IdentifiableCookie> = cookies.iterator()
         override fun hasNext(): Boolean = iterator.hasNext()
         override fun next(): Cookie = iterator.next().cookie
         override fun remove() {

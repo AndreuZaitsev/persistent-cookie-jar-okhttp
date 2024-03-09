@@ -23,7 +23,7 @@ import okhttp3.Cookie
  *
  * This new behaviour will be useful in determining when an already existing cookie in session must be overwritten.
  */
-internal class IdentifiableCookie(val cookie: Cookie) {
+internal data class IdentifiableCookie(val cookie: Cookie) {
 
     override fun equals(other: Any?): Boolean {
         if (other !is IdentifiableCookie) return false
@@ -46,12 +46,6 @@ internal class IdentifiableCookie(val cookie: Cookie) {
 
     companion object {
 
-        fun decorateAll(cookies: Collection<Cookie>): List<IdentifiableCookie> {
-            val identifiableCookies: MutableList<IdentifiableCookie> = ArrayList(cookies.size)
-            for (cookie in cookies) {
-                identifiableCookies += IdentifiableCookie(cookie)
-            }
-            return identifiableCookies
-        }
+        fun decorateAll(cookies: Collection<Cookie>): List<IdentifiableCookie> = cookies.map { IdentifiableCookie(it) }
     }
 }

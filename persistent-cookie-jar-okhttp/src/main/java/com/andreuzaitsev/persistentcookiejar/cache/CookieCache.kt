@@ -34,5 +34,8 @@ interface CookieCache {
      */
     fun clear()
 
+    /**
+     * Returns mutable iterator over cached cookies.
+     */
     fun iterator(): MutableIterator<Cookie>
 }
