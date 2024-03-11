@@ -19,7 +19,6 @@ import android.content.Context
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
-import com.andreuzaitsev.persistentcookiejar.persistence.DataStorePersistor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,12 +29,12 @@ import kotlinx.coroutines.sync.withLock
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 
-class CoroutinePersistentCookieJar(
+class DataStorePersistentCookieJar(
     private val cookieStorage: CoroutineCookiePersistor,
     private val cookieCache: CookieCache = SetCookieCache(),
 ) : CoroutineClearableCookieJar {
 
-    constructor(context: Context) : this(DataStorePersistor(context))
+    constructor(context: Context) : this(CoroutineCookiePersistor.DataStoreImpl(context))
 
     private val mutex = Mutex()
     private var initJob: Job? = null

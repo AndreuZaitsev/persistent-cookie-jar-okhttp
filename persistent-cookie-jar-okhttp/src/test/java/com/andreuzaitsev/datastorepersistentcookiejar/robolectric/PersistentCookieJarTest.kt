@@ -1,11 +1,15 @@
-package com.andreuzaitsev.persistentcookiejar.robolectric
+package com.andreuzaitsev.datastorepersistentcookiejar.robolectric
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.test.core.app.ApplicationProvider
-import com.andreuzaitsev.persistentcookiejar.PreferencesPersistentCookieJar
+import com.andreuzaitsev.persistentcookiejar.DataStorePersistentCookieJar
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
-import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.dataStore
+import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.After
 import org.junit.Assert
@@ -19,20 +23,22 @@ import org.robolectric.annotation.Config
 @Config(manifest = Config.NONE)
 class PersistentCookieJarTest {
 
-    private val persistentCookieJar: PreferencesPersistentCookieJar = PreferencesPersistentCookieJar(
+    private val dataStore: DataStore<Preferences> = ApplicationProvider.getApplicationContext<Context>().dataStore
+    private val persistor: CoroutineCookiePersistor = CoroutineCookiePersistor.DataStoreImpl(dataStore)
+    private val persistentCookieJar = DataStorePersistentCookieJar(
+        persistor,
         SetCookieCache(),
-        CookiePersistor.PrefsImpl(ApplicationProvider.getApplicationContext<Context>())
     )
 
     private val url = "https://domain.com/".toHttpUrl()
 
     @Before
-    fun setUp() {
+    fun setUp() = runTest {
         persistentCookieJar.clear()
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runTest {
         persistentCookieJar.clear()
     }
 
@@ -98,7 +104,7 @@ class PersistentCookieJarTest {
      * Test that the session cookies are cleared without affecting to the persisted cookies
      */
     @Test
-    fun clearSessionCookies() {
+    fun clearSessionCookies() = runTest {
         val persistentCookie = TestCookieCreator.createPersistentCookie(false)
         persistentCookieJar.saveFromResponse(url, listOf(persistentCookie))
         persistentCookieJar.saveFromResponse(url, listOf(TestCookieCreator.createNonPersistentCookie()))

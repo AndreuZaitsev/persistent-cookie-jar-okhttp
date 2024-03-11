@@ -1,12 +1,15 @@
-package com.andreuzaitsev.persistentcookiejar
+package com.andreuzaitsev.datastorepersistentcookiejar
 
+import com.andreuzaitsev.persistentcookiejar.DataStorePersistentCookieJar
+import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createExpiredCookie
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createNonPersistentCookie
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createPersistentCookie
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
-import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.test.runTest
 import okhttp3.Cookie
 import org.junit.Test
 import org.mockito.Mockito.atLeast
@@ -17,13 +20,13 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.whenever
 
-class PersistentCookieJarTestWithTestDoubles {
+class CoroutinePersistentCookieJarTestWithTestDoubles {
 
     @Test
-    fun `saveFromResponse with persistent cookie should save cookie in session and persistence`() {
+    fun `saveFromResponse with persistent cookie should save cookie in session and persistence`() = runTest {
         val cookieCache: CookieCache = mock()
-        val cookiePersistor: CookiePersistor = mock()
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val cookiePersistor: CoroutineCookiePersistor = mock()
+        val persistentCookieJar = DataStorePersistentCookieJar(cookiePersistor, cookieCache)
         val responseCookies = listOf(createPersistentCookie(false))
 
         persistentCookieJar.saveFromResponse(TestCookieCreator.DEFAULT_URL, responseCookies)
@@ -38,10 +41,10 @@ class PersistentCookieJarTestWithTestDoubles {
     }
 
     @Test
-    fun saveFromResponse_WithNonPersistentCookie_ShouldSaveCookieOnlyInSession() {
+    fun saveFromResponse_WithNonPersistentCookie_ShouldSaveCookieOnlyInSession() = runTest {
         val cookieCache: CookieCache = mock()
-        val cookiePersistor: CookiePersistor = mock()
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val cookiePersistor: CoroutineCookiePersistor = mock()
+        val persistentCookieJar = DataStorePersistentCookieJar(cookiePersistor, cookieCache)
         val responseCookies = listOf(TestCookieCreator.createNonPersistentCookie())
 
         persistentCookieJar.saveFromResponse(TestCookieCreator.DEFAULT_URL, responseCookies)
@@ -63,7 +66,7 @@ class PersistentCookieJarTestWithTestDoubles {
         val savedCookie = createNonPersistentCookie()
         val cookieCache: CookieCache = mock()
         whenever(cookieCache.iterator()).thenReturn(mutableListOf(savedCookie).iterator())
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, mock())
+        val persistentCookieJar = DataStorePersistentCookieJar(mock(), cookieCache)
 
         val requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL)
 
@@ -74,7 +77,7 @@ class PersistentCookieJarTestWithTestDoubles {
     fun `loadForRequest with non-matching URL should return empty cookie list`() {
         val cookieCache: CookieCache = mock()
         whenever(cookieCache.iterator()).thenReturn(emptyList<Cookie>().toMutableList().listIterator())
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, mock())
+        val persistentCookieJar = DataStorePersistentCookieJar(mock(), cookieCache)
 
         val requestCookies = persistentCookieJar.loadForRequest(TestCookieCreator.OTHER_URL)
 
@@ -85,7 +88,7 @@ class PersistentCookieJarTestWithTestDoubles {
     fun `loadForRequest with expired cookie matching URL should return empty cookie list`() {
         val cookieCache: CookieCache = mock()
         whenever(cookieCache.iterator()).thenReturn(listOf(createExpiredCookie()).toMutableList().listIterator())
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, mock())
+        val persistentCookieJar = DataStorePersistentCookieJar(mock(), cookieCache)
 
         val cookies = persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL)
 
@@ -93,15 +96,15 @@ class PersistentCookieJarTestWithTestDoubles {
     }
 
     @Test
-    fun loadForRequest_WithExpiredCookieMatchingUrl_ShouldRemoveTheCookie() {
+    fun loadForRequest_WithExpiredCookieMatchingUrl_ShouldRemoveTheCookie() = runTest {
         val savedCookie: Cookie = TestCookieCreator.createExpiredCookie()
         val cookieCache: CookieCache = mock()
         val cookieIterator: MutableIterator<Cookie> = mock()
         whenever(cookieCache.iterator()).thenReturn(cookieIterator)
         whenever(cookieIterator.hasNext()).thenReturn(true, false)
         whenever(cookieIterator.next()).thenReturn(savedCookie)
-        val cookiePersistor: CookiePersistor = mock()
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val cookiePersistor: CoroutineCookiePersistor = mock()
+        val persistentCookieJar = DataStorePersistentCookieJar(cookiePersistor, cookieCache)
 
         persistentCookieJar.loadForRequest(TestCookieCreator.DEFAULT_URL)
 
@@ -114,10 +117,10 @@ class PersistentCookieJarTestWithTestDoubles {
     }
 
     @Test
-    fun `clearSession should clear only session cookies`() {
+    fun `clearSession should clear only session cookies`() = runTest {
         val cookieCache: CookieCache = mock()
-        val cookiePersistor: CookiePersistor = mock()
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val cookiePersistor: CoroutineCookiePersistor = mock()
+        val persistentCookieJar = DataStorePersistentCookieJar(cookiePersistor, cookieCache)
 
         persistentCookieJar.clearSession()
 
@@ -126,10 +129,10 @@ class PersistentCookieJarTestWithTestDoubles {
     }
 
     @Test
-    fun `clear should clear all cookies`() {
+    fun `clear should clear all cookies`() = runTest {
         val cookieCache: CookieCache = mock()
-        val cookiePersistor: CookiePersistor = mock()
-        val persistentCookieJar = PreferencesPersistentCookieJar(cookieCache, cookiePersistor)
+        val cookiePersistor: CoroutineCookiePersistor = mock()
+        val persistentCookieJar = DataStorePersistentCookieJar(cookiePersistor, cookieCache)
 
         persistentCookieJar.clear()
 

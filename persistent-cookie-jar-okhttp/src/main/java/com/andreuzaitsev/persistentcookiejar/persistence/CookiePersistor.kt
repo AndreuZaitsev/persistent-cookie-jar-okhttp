@@ -15,7 +15,15 @@
  */
 package com.andreuzaitsev.persistentcookiejar.persistence
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import okhttp3.Cookie
+
+const val COOKIES_PREFERENCES_NAME = "CookiePersistence"
+
+fun createCookieKey(cookie: Cookie): String =
+    "${if (cookie.secure) "https" else "http"}://${cookie.domain}${cookie.path}|${cookie.name}"
 
 /**
  * A CookiePersistor handles the persistent cookie storage.
@@ -42,12 +50,37 @@ interface CookiePersistor {
      * Clear all cookies from persistence.
      */
     fun clear()
-}
 
-interface CoroutineCookiePersistor {
+    @SuppressLint("ApplySharedPref")
+    class PrefsImpl(
+        private val sharedPreferences: SharedPreferences
+    ) : CookiePersistor {
 
-    suspend fun loadAll(): List<Cookie>
-    suspend fun saveAll(cookies: Collection<Cookie>)
-    suspend fun removeAll(cookies: Collection<Cookie>)
-    suspend fun clear()
+        constructor(context: Context) : this(context.getSharedPreferences(COOKIES_PREFERENCES_NAME,
+            Context.MODE_PRIVATE))
+
+        override fun loadAll(): List<Cookie> = sharedPreferences.all.values
+            .filterIsInstance<String>()
+            .mapNotNull { serializedCookie -> SerializableCookie().decode(serializedCookie) }
+
+        override fun saveAll(cookies: Collection<Cookie>) {
+            val editor = sharedPreferences.edit()
+            for (cookie in cookies) {
+                editor.putString(createCookieKey(cookie), SerializableCookie().encode(cookie))
+            }
+            editor.commit()
+        }
+
+        override fun removeAll(cookies: Collection<Cookie>) {
+            val editor = sharedPreferences.edit()
+            for (cookie in cookies) {
+                editor.remove(createCookieKey(cookie))
+            }
+            editor.commit()
+        }
+
+        override fun clear() {
+            sharedPreferences.edit().clear().commit()
+        }
+    }
 }

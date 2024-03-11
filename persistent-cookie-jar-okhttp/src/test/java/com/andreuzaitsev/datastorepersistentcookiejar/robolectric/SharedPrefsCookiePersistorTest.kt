@@ -1,12 +1,14 @@
-package com.andreuzaitsev.persistentcookiejar.robolectric
+package com.andreuzaitsev.datastorepersistentcookiejar.robolectric
 
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
-import android.content.SharedPreferences
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.test.core.app.ApplicationProvider
 import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
-import com.andreuzaitsev.persistentcookiejar.persistence.COOKIES_PREFERENCES_NAME
-import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
+import com.andreuzaitsev.persistentcookiejar.persistence.dataStore
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
@@ -18,22 +20,19 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
-class SharedPrefsCookiePersistorTest {
+class DataStoreCookiePersistorTest {
 
-    private val sharedPreferences: SharedPreferences =
-        ApplicationProvider.getApplicationContext<Context>()
-            .getSharedPreferences(COOKIES_PREFERENCES_NAME, MODE_PRIVATE)
-
-    private val mockedSharedPreferences = mock<SharedPreferences>()
-    private val persistor: CookiePersistor = CookiePersistor.PrefsImpl(sharedPreferences)
+    private val dataStore: DataStore<Preferences> = ApplicationProvider.getApplicationContext<Context>().dataStore
+    private val mockedDataStore: DataStore<Preferences> = mock()
+    private val persistor: CoroutineCookiePersistor = CoroutineCookiePersistor.DataStoreImpl(dataStore)
 
     @After
-    fun clearPersistor() {
+    fun clearPersistor() = runTest {
         persistor.clear()
     }
 
     @Test
-    fun saveAll_ShouldSaveCookies() {
+    fun saveAll_ShouldSaveCookies() = runTest {
         val cookie = TestCookieCreator.createPersistentCookie(false)
         persistor.saveAll(listOf(cookie))
         val cookies = persistor.loadAll()
@@ -41,7 +40,7 @@ class SharedPrefsCookiePersistorTest {
     }
 
     @Test
-    fun removeAll_ShouldRemoveCookies() {
+    fun removeAll_ShouldRemoveCookies() = runTest {
         val cookie = TestCookieCreator.createPersistentCookie(false)
         persistor.saveAll(listOf(cookie))
         persistor.removeAll(listOf(cookie))
@@ -49,7 +48,7 @@ class SharedPrefsCookiePersistorTest {
     }
 
     @Test
-    fun clear_ShouldClearAllCookies() {
+    fun clear_ShouldClearAllCookies() = runTest {
         val cookie = TestCookieCreator.createPersistentCookie(false)
         persistor.saveAll(listOf(cookie))
         persistor.clear()
@@ -60,7 +59,7 @@ class SharedPrefsCookiePersistorTest {
      * Cookie equality used to update: same cookie-name, domain-value, and path-value.
      */
     @Test
-    fun addAll_WithACookieEqualsToOneAlreadyPersisted_ShouldUpdatePersistedCookie() {
+    fun addAll_WithACookieEqualsToOneAlreadyPersisted_ShouldUpdatePersistedCookie() = runTest {
         persistor.saveAll(listOf(TestCookieCreator.createPersistentCookie("name", "first")))
         val lastCookieThatShouldBeSaved = TestCookieCreator.createPersistentCookie("name", "last")
         persistor.saveAll(listOf(lastCookieThatShouldBeSaved))
@@ -76,7 +75,7 @@ class SharedPrefsCookiePersistorTest {
      * Cookie equality used to update: same cookie-name, domain-value, and path-value.
      */
     @Test
-    fun saveAll_WithMultipleEqualCookies_LastOneShouldBePersisted() {
+    fun saveAll_WithMultipleEqualCookies_LastOneShouldBePersisted() = runTest {
         val equalCookieThatShouldNotBeAdded = TestCookieCreator.createPersistentCookie("name", "first")
         val equalCookieThatShouldBeAdded = TestCookieCreator.createPersistentCookie("name", "last")
         persistor.saveAll(listOf(
@@ -88,10 +87,10 @@ class SharedPrefsCookiePersistorTest {
     }
 
     @Test
-    fun loadAll_WithCorruptedCookie_ShouldSkipCookie() {
+    fun loadAll_WithCorruptedCookie_ShouldSkipCookie() = runTest {
         val corruptedCookies = mutableMapOf<String, String>()
         corruptedCookies["key"] = "invalidCookie_"
-        Mockito.doReturn(corruptedCookies).`when`(mockedSharedPreferences).all
+        Mockito.doReturn(corruptedCookies).`when`(mockedDataStore).data.toList()
         Assert.assertTrue(persistor.loadAll().isEmpty())
     }
 }
