@@ -19,6 +19,7 @@ import android.content.Context
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,6 +33,7 @@ import okhttp3.HttpUrl
 class DataStorePersistentCookieJar(
     private val cookieStorage: CoroutineCookiePersistor,
     private val cookieCache: CookieCache = SetCookieCache(),
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : CoroutineClearableCookieJar {
 
     constructor(context: Context) : this(CoroutineCookiePersistor.DataStoreImpl(context))
@@ -40,7 +42,7 @@ class DataStorePersistentCookieJar(
     private var initJob: Job? = null
 
     init {
-        initJob = CoroutineScope(Dispatchers.Default).launch {
+        initJob = CoroutineScope(dispatcher).launch {
             mutex.withLock {
                 cookieCache.addAll(cookieStorage.loadAll())
             }
@@ -49,14 +51,15 @@ class DataStorePersistentCookieJar(
 
     @Synchronized
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        runBlocking { initJob?.join() }
         cookieCache.addAll(cookies)
-        runBlocking {
-            cookieStorage.saveAll(cookies.filter { it.persistent })
-        }
+        runBlocking { cookieStorage.saveAll(cookies.filter { it.persistent }) }
     }
 
     @Synchronized
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        runBlocking { initJob?.join() }
+
         val expiredCookies: MutableList<Cookie> = mutableListOf()
         val validCookies: MutableList<Cookie> = mutableListOf()
 
@@ -70,9 +73,7 @@ class DataStorePersistentCookieJar(
                 validCookies += currentCookie
             }
         }
-        runBlocking {
-            cookieStorage.removeAll(expiredCookies)
-        }
+        runBlocking { cookieStorage.removeAll(expiredCookies) }
         return validCookies
     }
 

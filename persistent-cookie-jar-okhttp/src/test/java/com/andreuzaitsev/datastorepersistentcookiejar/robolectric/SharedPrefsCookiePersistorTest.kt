@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.test.core.app.ApplicationProvider
-import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
+import com.andreuzaitsev.common.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
 import com.andreuzaitsev.persistentcookiejar.persistence.dataStore
 import kotlinx.coroutines.flow.toList

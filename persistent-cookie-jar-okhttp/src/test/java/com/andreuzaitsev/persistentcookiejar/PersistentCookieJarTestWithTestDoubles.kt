@@ -1,8 +1,9 @@
 package com.andreuzaitsev.persistentcookiejar
 
-import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createExpiredCookie
-import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createNonPersistentCookie
-import com.andreuzaitsev.persistentcookiejar.TestCookieCreator.createPersistentCookie
+import com.andreuzaitsev.common.TestCookieCreator
+import com.andreuzaitsev.common.TestCookieCreator.createExpiredCookie
+import com.andreuzaitsev.common.TestCookieCreator.createNonPersistentCookie
+import com.andreuzaitsev.common.TestCookieCreator.createPersistentCookie
 import com.andreuzaitsev.persistentcookiejar.cache.CookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import junit.framework.TestCase.assertEquals

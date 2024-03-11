@@ -1,4 +1,4 @@
-package com.andreuzaitsev.persistentcookiejar
+package com.andreuzaitsev.common
 
 import okhttp3.Cookie
 import okhttp3.HttpUrl.Companion.toHttpUrl

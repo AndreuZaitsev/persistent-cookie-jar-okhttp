@@ -3,7 +3,7 @@ package com.andreuzaitsev.persistentcookiejar.robolectric
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.andreuzaitsev.persistentcookiejar.PreferencesPersistentCookieJar
-import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
+import com.andreuzaitsev.common.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import okhttp3.HttpUrl.Companion.toHttpUrl

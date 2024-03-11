@@ -1,4 +1,4 @@
-package com.andreuzaitsev.persistentcookiejar
+package com.andreuzaitsev.common
 
 import com.andreuzaitsev.persistentcookiejar.persistence.SerializableCookie
 import org.junit.Assert

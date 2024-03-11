@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import androidx.test.core.app.ApplicationProvider
-import com.andreuzaitsev.persistentcookiejar.TestCookieCreator
+import com.andreuzaitsev.common.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.persistence.COOKIES_PREFERENCES_NAME
 import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import org.junit.After
