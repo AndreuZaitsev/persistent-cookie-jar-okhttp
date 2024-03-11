@@ -7,7 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.andreuzaitsev.common.TestCookieCreator
 import com.andreuzaitsev.persistentcookiejar.persistence.CoroutineCookiePersistor
 import com.andreuzaitsev.persistentcookiejar.persistence.dataStore
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert
@@ -90,7 +90,7 @@ class DataStoreCookiePersistorTest {
     fun loadAll_WithCorruptedCookie_ShouldSkipCookie() = runTest {
         val corruptedCookies = mutableMapOf<String, String>()
         corruptedCookies["key"] = "invalidCookie_"
-        Mockito.doReturn(corruptedCookies).`when`(mockedDataStore).data.toList()
+        Mockito.doReturn(flowOf(corruptedCookies)).`when`(mockedDataStore).data
         Assert.assertTrue(persistor.loadAll().isEmpty())
     }
 }

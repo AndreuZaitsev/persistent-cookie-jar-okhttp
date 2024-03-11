@@ -17,6 +17,7 @@ package com.andreuzaitsev.persistentcookiejar.persistence
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import okhttp3.Cookie
 
@@ -56,8 +57,7 @@ interface CookiePersistor {
         private val sharedPreferences: SharedPreferences
     ) : CookiePersistor {
 
-        constructor(context: Context) : this(context.getSharedPreferences(COOKIES_PREFERENCES_NAME,
-            Context.MODE_PRIVATE))
+        constructor(context: Context) : this(context.getSharedPreferences(COOKIES_PREFERENCES_NAME, MODE_PRIVATE))
 
         override fun loadAll(): List<Cookie> = sharedPreferences.all.values
             .filterIsInstance<String>()
