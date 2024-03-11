@@ -109,7 +109,9 @@ class PersistentCookieJarTest {
         persistentCookieJar.saveFromResponse(url, listOf(persistentCookie))
         persistentCookieJar.saveFromResponse(url, listOf(TestCookieCreator.createNonPersistentCookie()))
         persistentCookieJar.clearSession()
-        Assert.assertEquals(1, persistentCookieJar.loadForRequest(url).size.toLong())
-        Assert.assertEquals(persistentCookieJar.loadForRequest(url)[0], persistentCookie)
+
+        val cookies = persistentCookieJar.loadForRequest(url)
+        Assert.assertEquals(1, cookies.size.toLong())
+        Assert.assertEquals(cookies[0], persistentCookie)
     }
 }

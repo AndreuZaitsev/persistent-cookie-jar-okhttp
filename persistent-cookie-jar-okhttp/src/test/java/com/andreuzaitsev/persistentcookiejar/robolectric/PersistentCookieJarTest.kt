@@ -2,8 +2,8 @@ package com.andreuzaitsev.persistentcookiejar.robolectric
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.andreuzaitsev.persistentcookiejar.PreferencesPersistentCookieJar
 import com.andreuzaitsev.common.TestCookieCreator
+import com.andreuzaitsev.persistentcookiejar.PreferencesPersistentCookieJar
 import com.andreuzaitsev.persistentcookiejar.cache.SetCookieCache
 import com.andreuzaitsev.persistentcookiejar.persistence.CookiePersistor
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -19,10 +19,10 @@ import org.robolectric.annotation.Config
 @Config(manifest = Config.NONE)
 class PersistentCookieJarTest {
 
-    private val persistentCookieJar: PreferencesPersistentCookieJar = PreferencesPersistentCookieJar(
-        SetCookieCache(),
-        CookiePersistor.PrefsImpl(ApplicationProvider.getApplicationContext<Context>())
-    )
+    private val cache = SetCookieCache()
+    private val cookieStorage = CookiePersistor.PrefsImpl(ApplicationProvider.getApplicationContext<Context>())
+    private val persistentCookieJar: PreferencesPersistentCookieJar =
+        PreferencesPersistentCookieJar(cache, cookieStorage)
 
     private val url = "https://domain.com/".toHttpUrl()
 
@@ -103,7 +103,9 @@ class PersistentCookieJarTest {
         persistentCookieJar.saveFromResponse(url, listOf(persistentCookie))
         persistentCookieJar.saveFromResponse(url, listOf(TestCookieCreator.createNonPersistentCookie()))
         persistentCookieJar.clearSession()
-        Assert.assertEquals(1, persistentCookieJar.loadForRequest(url).size.toLong())
-        Assert.assertEquals(persistentCookieJar.loadForRequest(url)[0], persistentCookie)
+
+        val cookies = persistentCookieJar.loadForRequest(url)
+        Assert.assertEquals(1, cookies.size.toLong())
+        Assert.assertEquals(cookies[0], persistentCookie)
     }
 }

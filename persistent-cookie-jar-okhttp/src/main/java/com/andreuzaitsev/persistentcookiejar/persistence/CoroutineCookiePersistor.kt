@@ -7,9 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.firstOrNull
 import okhttp3.Cookie
 
 val Context.dataStore by preferencesDataStore(
@@ -31,17 +29,19 @@ interface CoroutineCookiePersistor {
         constructor(context: Context) : this(context.dataStore)
 
         override suspend fun loadAll(): List<Cookie> = dataStore.data
+            .firstOrNull()
+            ?.asMap()
+            .orEmpty()
+            .values
             .filterIsInstance<String>()
             .mapNotNull(SerializableCookie()::decode)
-            .toList()
 
         override suspend fun saveAll(cookies: Collection<Cookie>) {
             dataStore.edit { prefs ->
                 cookies
                     .asSequence()
                     .map {
-                        stringPreferencesKey(createCookieKey(it)) to SerializableCookie().encode(
-                            it).orEmpty()
+                        stringPreferencesKey(createCookieKey(it)) to SerializableCookie().encode(it).orEmpty()
                     }
                     .forEach(prefs::plusAssign)
             }
