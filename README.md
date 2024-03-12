@@ -21,7 +21,7 @@ Step 2. Add the dependency
 
 ```groovy
 dependencies {
-    implementation 'com.github.thomas-bouvier:persistent-cookie-jar-okhttp:1.0.2'
+    implementation "com.github.andreu-zaitsev:persistent-cookie-jar:1.0.0"
 }
 ```
 
@@ -30,8 +30,7 @@ dependencies {
 Create an instance of `PersistentCookieJar` passing a `CookieCache` and a `CookiePersistor`:
 
 ```java
-ClearableCookieJar cookieJar =
-                new PersistentCookieJar(new SetCookieCache(), new SharedPrefsCookiePersistor(context));
+ClearableCookieJar cookieJar = new PersistentCookieJar(context);
 ```
 
 Then just add the CookieJar when building your OkHttp client:
@@ -51,14 +50,15 @@ This is a really simple library but here are some of the things that it provides
 
 * Decoupled and extensible: `CookieCache` and `CookiePersistor` are interfaces so you can provide your own implementation for each one.
     * `CookieCache` represents an in-memory cookie storage. `SetCookieCache` is the provided implementation that uses a Set to store the Cookies.
-    * `CookiePersistor` represents a persistent storage. `SharedPrefsCookiePersistor` is the provided implementation that uses a SharedPreferences to persist the Cookies.
+    * `CoroutineCookiePersistor` represents a persistent storage.
+    * `CoroutineCookiePersistor.DataStoreImpl` is the provided implementation that uses a DataStore to persist the Cookies.
 
 * Thread-safe: `PersistentCookieJar` public methods are synchronized so there is no need to worry about threading if you need to implement a `CookieCache` or a `CookiePersistor`.
 
 ## License
 
     Copyright 2016 Francisco José Montiel Navarro
-    Copyright 2019 Thomas Bouvier
+    Copyright 2024 Andreu Zaitsev
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
