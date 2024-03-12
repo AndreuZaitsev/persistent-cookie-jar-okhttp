@@ -2,7 +2,7 @@
 
 [![Release](https://jitpack.io/v/thomas-bouvier/persistent-cookie-jar-okhttp.svg)](https://jitpack.io/#thomas-bouvier/persistent-cookie-jar-okhttp)
 
-A persistent CookieJar implementation for OkHttp 3 based on SharedPreferences.
+A persistent CookieJar implementation for OkHttp 3 based on DataStore.
 
 ## Download
 
